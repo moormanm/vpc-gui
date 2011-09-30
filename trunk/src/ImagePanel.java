@@ -23,8 +23,8 @@ class ImagePanel extends JPanel
 	
 
 	
-    private BufferedImage image;  
-    private double scale;  
+    protected BufferedImage image;  
+    protected double scale;  
 
     
     
@@ -96,6 +96,10 @@ class ImagePanel extends JPanel
         return newScale;
 	}
 	
+	public BufferedImage getImage() {
+		return realImage;
+	}
+	
     public void setImage(String f)  
     {  
 
@@ -119,6 +123,19 @@ class ImagePanel extends JPanel
         revalidate();
         repaint();
     }
+    
+    public void setImage(BufferedImage img)  
+    {  
+
+   
+        realImage = img;
+        //set optimum scale
+        setScale(getDefaultScale());
+
+        revalidate();
+        repaint();
+    }
+    
 /*
 	@Override
 	public void mouseWheelMoved(MouseWheelEvent e) {
