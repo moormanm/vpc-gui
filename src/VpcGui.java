@@ -89,18 +89,7 @@ public class VpcGui extends JFrame {
 	private JScrollPane imageScroller = new JScrollPane();
 	private JPanel ResultsPanel = new JPanel();
 
-	private void standardBorder(JPanel jp, String name) {
-		jp.setBorder(BorderFactory.createTitledBorder(
-				BorderFactory.createEtchedBorder(), name, TitledBorder.LEFT,
-				TitledBorder.TOP, Defaults.TITLE_FONT));
 
-	}
-
-	private JLabel standardLabel(String name) {
-		JLabel tmp = new JLabel(name);
-		tmp.setFont(Defaults.LABEL_FONT);
-		return tmp;
-	}
 
 	private JMenuBar makeMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
@@ -441,10 +430,10 @@ public class VpcGui extends JFrame {
 		JPanel top = new JPanel(new FlowLayout(5));
 		JPanel bottom = new JPanel(new BorderLayout());
 
-		standardBorder(CountPlaquesPanel, "1) Select Directory");
-		standardBorder(CalibrationsPanel, "2) Calibrate");
-		standardBorder(ImagesPanel, "3) Select Images");
-		standardBorder(ResultsPanel, "4) Count");
+		Utilities.standardBorder(CountPlaquesPanel, "1) Select Directory");
+		Utilities.standardBorder(CalibrationsPanel, "2) Calibrate");
+		Utilities.standardBorder(ImagesPanel, "3) Select Images");
+		Utilities.standardBorder(ResultsPanel, "4) Count");
 
 		// Build the count Count Plaques panel
 		DesignGridLayout l = new DesignGridLayout(CountPlaquesPanel);
@@ -454,7 +443,7 @@ public class VpcGui extends JFrame {
 		currentFolderTextField.setColumns(50);
 		currentFolderTextField.setEditable(false);
 		JPanel flowPanel = new JPanel();
-		flowPanel.add(standardLabel("Selected Folder:"));
+		flowPanel.add(Utilities.standardLabel("Selected Folder:"));
 		flowPanel.add(currentFolderTextField);
 		l.row().left().add(flowPanel);
 
@@ -466,14 +455,14 @@ public class VpcGui extends JFrame {
 				.withOwnRowWidth()
 				.center(newCalibrationButton, loadCalibrationButton,
 						saveCalibrationButton);
-		l.row().left().add(standardLabel("Rows:"), rowsCalibrationLabel);
-		l.row().left().add(standardLabel("Columns:"), columnsCalibrationLabel);
+		l.row().left().add(Utilities.standardLabel("Rows:"), rowsCalibrationLabel);
+		l.row().left().add(Utilities.standardLabel("Columns:"), columnsCalibrationLabel);
 		l.row()
 				.left()
-				.add(standardLabel("Average Plaque Diameter:"),
+				.add(Utilities.standardLabel("Average Plaque Diameter:"),
 						apdCalibrationLabel);
 		l.row().left()
-				.add(standardLabel("Plate Diameter:"), pdCalibrationLabel);
+				.add(Utilities.standardLabel("Plate Diameter:"), pdCalibrationLabel);
 
 		// Build the Images panel
 		ImagesPanel.setLayout(new BorderLayout());
