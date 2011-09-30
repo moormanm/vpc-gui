@@ -62,6 +62,8 @@ public class VpcGui extends JFrame {
 		});
 	}
 
+	private VPCParams currentParameters = new VPCParams();
+	
 	private JButton chooseFolderButton = new JButton("Choose Folder");
 	private JButton countAllButton = new JButton("Count All");
 	private JButton countSelectedButton = new JButton("Count Selected");
@@ -89,6 +91,7 @@ public class VpcGui extends JFrame {
 	private JScrollPane imageScroller = new JScrollPane();
 	private JPanel ResultsPanel = new JPanel();
 
+	private JFrame topFrame = new JFrame();
 
 
 	private JMenuBar makeMenuBar() {
@@ -214,7 +217,7 @@ public class VpcGui extends JFrame {
 			for (int i : selectedRows) {
 				Object o = model.getValueAt(i, 0);
 				File f = (File) o;
-				results.put(f.toString(), vpcExec(new VPCParams(0, 0, 0, 0, f)));
+				results.put(f.toString(), vpcExec(f, currentParameters));
 			}
 
 			// Display the data for the first selected row
@@ -225,6 +228,7 @@ public class VpcGui extends JFrame {
 
 	}
 
+	
 	private class CountAllButtonHandler implements ActionListener {
 
 		@Override
@@ -232,8 +236,7 @@ public class VpcGui extends JFrame {
 
 			for (int i = 0; i < model.getRowCount(); i++) {
 				File f = (File) model.getValueAt(i, 0);
-				String errmsg = new String();
-				results.put(f.toString(), vpcExec(new VPCParams(0, 0, 0, 0, f)));
+				results.put(f.toString(), vpcExec(f,currentParameters));
 			}
 
 			int rowIndex = fileNameTable.getSelectedRow();
@@ -247,6 +250,17 @@ public class VpcGui extends JFrame {
 
 	}
 
+	private class NewCalibrationButtonHandler implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			VPCParams tmp = new VPCParameterWizard().run(topFrame);
+			
+			
+		}
+		
+	}
+	
 	private class FolderButtonHandler implements ActionListener {
 		@Override
 		public void actionPerformed(ActionEvent e) {
@@ -290,25 +304,6 @@ public class VpcGui extends JFrame {
 
 	}
 
-	private class VPCParams {
-		public final int rows;
-		public final int cols;
-		public final int plateDiameter;
-		public final int maxPlaqueDiameter;
-		public final File imageFile;
-
-		VPCParams(int rows, int cols, int plateDiameter, int maxPlaqueDiameter,
-				File imageFile) {
-			this.rows = rows;
-			this.cols = cols;
-			this.plateDiameter = plateDiameter;
-			this.maxPlaqueDiameter = maxPlaqueDiameter;
-			this.imageFile = imageFile;
-
-		}
-
-	}
-
 	private class VPCResult {
 		public Vector<Vector<Integer>> count;
 		public String errMsg;
@@ -316,7 +311,7 @@ public class VpcGui extends JFrame {
 
 	private HashMap<String, VPCResult> results = new HashMap<String, VPCResult>();
 
-	private VPCResult vpcExec(VPCParams params) {
+	private VPCResult vpcExec(File f, VPCParams params) {
 
 		Vector<Vector<Integer>> ret = new Vector<Vector<Integer>>();
 		VPCResult res = new VPCResult();
@@ -334,17 +329,18 @@ public class VpcGui extends JFrame {
 			try {
 				p.waitFor();
 			} catch (InterruptedException e) {
-				Utilities.showError("Failed to count plaques for file: " + params.imageFile + " : " + e);
+				Utilities.showError("Failed to count plaques for file: " + f + " : " + e);
 			}
 
 			if (p.exitValue() != 0) {
-				System.out.println("Bad ret value for " + params.imageFile);
+				System.out.println("Bad ret value for " + f);
 				System.out.println(cmd);
 				res.errMsg = "Could not process image.";
 				return res;
 			}
 
 			String s = null;
+			//process the output
 			while ((s = stdout.readLine()) != null) {
 				String[] tokens = s.split(", ");
 				if (tokens == null || tokens.length == 0
@@ -357,9 +353,9 @@ public class VpcGui extends JFrame {
 				}
 				ret.add(row);
 			}
-			System.out.println("Done with " + params.imageFile);
+			System.out.println("Done with " + f);
 		} catch (IOException e) {
-			Utilities.showError(e.toString());
+			Utilities.showError("Internal error: " + e.toString());
 		}
 		res.count = ret;
 		return res;
@@ -375,6 +371,9 @@ public class VpcGui extends JFrame {
 		// Count all action
 		countAllButton.addActionListener(new CountAllButtonHandler());
 
+		// New parameters action
+		newCalibrationButton.addActionListener(new NewCalibrationButtonHandler());
+		
 		// Create table model columns
 		model.addColumn("File name");
 		fileNameTable.getSelectionModel().addListSelectionListener(
@@ -416,6 +415,8 @@ public class VpcGui extends JFrame {
 
 	private void build() {
 
+		this.topFrame = this;
+		
 		this.addComponentListener(new java.awt.event.ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
@@ -577,19 +578,6 @@ public class VpcGui extends JFrame {
 
 	}
 
-	private static BufferedImage resizeImage(BufferedImage originalImage,
-			int width, int height) {
-		int type = BufferedImage.TYPE_INT_RGB;
-		BufferedImage resizedImage = new BufferedImage(width, height, type);
-		Graphics2D g = resizedImage.createGraphics();
-		g.drawImage(originalImage, 0, 0, width, height, null);
-		g.dispose();
 
-		return resizedImage;
-	}
-
-	/**
-	 * @param args
-	 */
 
 }
