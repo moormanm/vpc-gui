@@ -1,9 +1,12 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
 
 import javax.swing.JButton;
@@ -12,6 +15,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
@@ -28,6 +32,8 @@ public class VPCParameterWizard {
 	private int userDilationFactor = 0;
 	private JFrame parentFrame;
 
+	private int keyMult = 1;
+	
 	public VPCParams run(JFrame parentFrame) {
 		this.parentFrame = parentFrame;
 
@@ -127,11 +133,14 @@ public class VPCParameterWizard {
 	private boolean runStepTwo() {
 		//Create a modal dialog
 		final JDialog dlg = new  JDialog(parentFrame,true);
+		dlg.setFocusable(true);
 		dlg.setSize(800,600);
 		JPanel content = new JPanel(new BorderLayout());
 		final PlateSizeImagePanel imgPanel = new PlateSizeImagePanel();
 		imgPanel.setImage(tuningImage);
-		Utilities.standardBorder(content, "2) Set plate size.");
+		imgPanel.setScale(imgPanel.getDefaultScale() * 4.0);
+		JScrollPane imgScroller = new JScrollPane(imgPanel);
+		Utilities.standardBorder(content, "2) Set plate size");
 		final MyBoolean goToNextStep = new MyBoolean();
 		final JSlider sizeSlider = new JSlider(50,500);
 	
@@ -163,57 +172,66 @@ public class VPCParameterWizard {
 				dlg.setVisible(false);
 			}
 	    });	
-	    final JButton upButton = new JButton("U");
-	    final JButton downButton = new JButton("D");
-	    final JButton leftButton = new JButton("L");
-	    final JButton rightButton = new JButton("R");
-	    
-	    ActionListener directionListener = new ActionListener() {
 
+	    KeyListener keyListener = new KeyListener() {
 			@Override
-			public void actionPerformed(ActionEvent e) {
+			public void keyPressed(KeyEvent e) {
 				int ptx = imgPanel.getCrossHairLocation().x;
 				int pty = imgPanel.getCrossHairLocation().y;
-				if(e.getSource() == upButton) {
-					imgPanel.setCrossHairLocation(new Point(ptx, pty-1));
-				}
-				else if(e.getSource() == downButton) {
-					imgPanel.setCrossHairLocation(new Point(ptx, pty+1));
-				}
-				else if(e.getSource() == leftButton) {
-					imgPanel.setCrossHairLocation(new Point(ptx-1, pty));
-				}
-				else if(e.getSource() == rightButton) {
-					imgPanel.setCrossHairLocation(new Point(ptx+1, pty));
-				}
+				int sz = imgPanel.getCrossHairSize();
+			    int keyCode = e.getKeyCode();
+			    switch( keyCode ) { 
+			        case KeyEvent.VK_UP:
+			        	imgPanel.setCrossHairLocation(new Point(ptx, pty-keyMult));
+			        	keyMult++;
+			            break;
+			        case KeyEvent.VK_DOWN:
+			        	imgPanel.setCrossHairLocation(new Point(ptx, pty+keyMult));
+			        	keyMult++;
+			            break;
+			        case KeyEvent.VK_LEFT:
+			        	imgPanel.setCrossHairLocation(new Point(ptx-keyMult, pty));
+			        	keyMult++;
+			            break;
+			        case KeyEvent.VK_RIGHT :
+			        	imgPanel.setCrossHairLocation(new Point(ptx+keyMult, pty));
+			        	keyMult++;
+			            break;
+			        case KeyEvent.VK_ADD :
+			        	imgPanel.setCrossHairSize(sz + keyMult);
+			        	keyMult++;
+			        	break;
+			        case KeyEvent.VK_SUBTRACT :
+			        	imgPanel.setCrossHairSize(sz - keyMult);
+			        	keyMult++;
+			        	break;
+			     }
+			    //enforce Max key mult 
+			    keyMult = Math.min(keyMult, 20);
+			}
+			
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+				//reset the key multiplier when release is detected
+				keyMult = 1;
+			}
+
+			@Override
+			public void keyTyped(KeyEvent arg0) {
+				// TODO Auto-generated method stub
 				
 			}
-	    	
 	    };
 	    
-	    upButton.addActionListener(directionListener);
-	    downButton.addActionListener(directionListener);
-	    leftButton.addActionListener(directionListener);
-	    rightButton.addActionListener(directionListener);
-	    
-	    
-	    
-	    JPanel controlsPanel = new JPanel();
-		controlsPanel.add(sizeSlider);
-		
-		JPanel dirPanel = new JPanel(new BorderLayout());
-		dirPanel.add(upButton, BorderLayout.NORTH);
-		dirPanel.add(downButton, BorderLayout.SOUTH);
-		dirPanel.add(leftButton, BorderLayout.WEST);
-		dirPanel.add(rightButton, BorderLayout.EAST);
-	
-		controlsPanel.add(dirPanel);
+	    dlg.addKeyListener(keyListener);
+	 
 		JPanel okCancelPanel = new JPanel();
 		okCancelPanel.add(cancelButton);
 		okCancelPanel.add(okButton);
 		
-		content.add(controlsPanel, BorderLayout.NORTH);
-		content.add(imgPanel, BorderLayout.CENTER);
+		content.add(Utilities.standardLabel("Use the arrow keys and the + and - keys to move and size the circular guide. The guide should be sized to cover an entire plate, but NOT including the bright edges."), BorderLayout.NORTH);
+		content.add(imgScroller, BorderLayout.CENTER);
 		content.add(okCancelPanel, BorderLayout.SOUTH);
 		
 		dlg.setContentPane(content);
@@ -238,6 +256,9 @@ public class VPCParameterWizard {
 		public void setCrossHairSize(int sz) {
 			crossHairSize = sz;
 			repaint();
+		}
+		public int getCrossHairSize() {
+			return crossHairSize;
 		}
 		
 		public Point getCrossHairLocation() {
