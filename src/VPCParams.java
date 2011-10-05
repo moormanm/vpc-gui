@@ -4,11 +4,11 @@ import java.io.File;
 public class VPCParams {
 	public  int rows;
 	public  int cols;
-	public  int plateDiameter;
+	public  int plateRadius;
 	public  int dilationFactor;
 	public  int erosionFactor;
 
-	public File imageFile;
+
 
 	public VPCParams() {
 		
@@ -24,15 +24,11 @@ public class VPCParams {
 		return this;
 	}
 	
-	public VPCParams setPlateDiameter(int plateDiameter) {
-		this.plateDiameter=plateDiameter;
+	public VPCParams setPlateRadius(int plateRadius) {
+		this.plateRadius=plateRadius;
 		return this;
 	}
 	
-	public VPCParams setImageFile(File imageFile) {
-		this.imageFile = imageFile;
-		return this;
-	}
 
 	public VPCParams setErosionFactor(int erosionFactor) {
 		this.erosionFactor = erosionFactor;

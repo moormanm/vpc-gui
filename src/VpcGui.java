@@ -1,15 +1,14 @@
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Graphics2D;
+
 import java.awt.GraphicsEnvironment;
-import java.awt.Point;
+
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentEvent;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
@@ -18,16 +17,10 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
-import java.io.StringBufferInputStream;
-import java.io.StringWriter;
-import java.io.Writer;
-import java.lang.reflect.InvocationTargetException;
+
 import java.util.HashMap;
 import java.util.Vector;
 
-import javax.imageio.ImageIO;
-import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -38,12 +31,12 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
-import javax.swing.JSpinner;
+
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.SpinnerNumberModel;
+
 import javax.swing.SwingUtilities;
-import javax.swing.border.TitledBorder;
+
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
@@ -51,6 +44,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
 import net.java.dev.designgridlayout.*;
 
+@SuppressWarnings("serial")
 public class VpcGui extends JFrame {
 	public static void main(String[] args) {
 		// Schedule a job for the event-dispatching thread:
@@ -130,6 +124,9 @@ public class VpcGui extends JFrame {
 
 				for (VPCResult r : results.values()) {
 					int tmpWells = 0;
+					if(r.count == null) {
+						continue;
+					}
 					for (Vector<Integer> row : r.count) {
 						tmpWells += row.size();
 					}
@@ -145,18 +142,29 @@ public class VpcGui extends JFrame {
 					for (String fileName : results.keySet()) {
 						VPCResult r = results.get(fileName);
 						out.append(fileName + ",");
+						if(r.count == null) {
+							out.append(Utilities.newLine);
+							continue;
+						}
 						for (Vector<Integer> row : r.count) {
 							for (Integer val : row) {
 								out.append(val + ",");
 							}
 						}
 						out.append(Utilities.newLine);
+
 					}
+					out.flush();
+					out.close();
+					Utilities.showInfo( "Successfully saved to file.", "");
 				} catch (IOException e1) {
 					Utilities.showError("IO Error");
 					return;
 				}
+			    
+			    
 			}
+			
 		});
 
 		menuItem = new JMenuItem("Generate Report");
@@ -320,7 +328,7 @@ public class VpcGui extends JFrame {
 		String launcherPath = this.getClass().getResource("vpc.exe").getPath();
 		try {
 			String cmd = launcherPath + " " + "\""
-					+ params.imageFile.getAbsolutePath() + "\"";
+					+ f.getAbsolutePath() + "\"";
 
 			Process p = r.exec(cmd);
 			BufferedReader stdout = new BufferedReader(new InputStreamReader(
