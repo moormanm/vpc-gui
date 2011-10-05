@@ -2,20 +2,11 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseWheelListener;
-import java.awt.geom.AffineTransform;
+
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.IOException;
-import java.net.MalformedURLException;
 
 import javax.imageio.ImageIO;
-import javax.print.DocFlavor.URL;
 import javax.swing.JPanel;
 
 class ImagePanel extends JPanel 
@@ -35,7 +26,8 @@ class ImagePanel extends JPanel
 
     }  
    
-    protected void paintComponent(Graphics g)  
+    @Override
+	protected void paintComponent(Graphics g)  
     {  
         super.paintComponent(g);
         if(image == null) {
@@ -46,7 +38,8 @@ class ImagePanel extends JPanel
         g.drawImage(image, 0, 0, null);
     }  
    
-    public Dimension getPreferredSize()  
+    @Override
+	public Dimension getPreferredSize()  
     {  
     	if(realImage == null) {
     		return new Dimension();

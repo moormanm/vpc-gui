@@ -8,6 +8,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.Vector;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -25,9 +30,10 @@ public class VPCParameterWizard {
 
 	private BufferedImage tuningPlate = null;
 	private BufferedImage tuningImage = null;
+	private File tuningImageFile = null;
 	private int userRows = 0;
 	private int userCols = 0;
-	private int userPlateDiameter = 0;
+	private int userPlateRadius = 0;
 	private int userErosionFactor = 0;
 	private int userDilationFactor = 0;
 	private JFrame parentFrame;
@@ -42,7 +48,7 @@ public class VPCParameterWizard {
 		}
 
 		return new VPCParams().setCols(userCols).setRows(userRows)
-				.setPlateDiameter(userPlateDiameter)
+				.setPlateRadius(userPlateRadius)
 				.setErosionFactor(userErosionFactor)
 				.setDilationFactor(userDilationFactor);
 
@@ -105,7 +111,10 @@ public class VPCParameterWizard {
 							.toString());
 					imgPanel.setImage(selectedFileTextField.getText());
 					tuningImage = imgPanel.getImage();
-				} else {
+					if(tuningImage != null) {
+						tuningImageFile = new File(selectedFileTextField.getText());
+					}
+				} else { 
 					tuningImage = null;
 					return;
 				}
@@ -120,7 +129,8 @@ public class VPCParameterWizard {
 		okCancelPanel.add(okButton);
 		
 		content.add(flowPanel, BorderLayout.NORTH);
-		content.add(imgPanel, BorderLayout.CENTER);
+		JScrollPane imgScroller = new JScrollPane(imgPanel);
+		content.add(imgScroller, BorderLayout.CENTER);
 		content.add(okCancelPanel, BorderLayout.SOUTH);
 		
 		
@@ -130,6 +140,77 @@ public class VPCParameterWizard {
 		return goToNextStep.get();
 	}
 
+	private boolean segmentationTest(int idealRadius) {
+	    System.out.println("Plate radius is :" + idealRadius);
+		//Copy the image to temp file
+		File tmp = null;
+		try {
+			tmp = File.createTempFile("tempImg", ".jpg");
+			Utilities.copyFile(tuningImageFile, tmp);
+		} catch (IOException e) {
+			Utilities.showError("Could not create temporary file: " + e);
+			return false;
+		}
+		
+		String launcherPath = this.getClass().getResource("vpc.exe").getPath();
+		Runtime r = Runtime.getRuntime();
+		try {
+			String cmd = launcherPath + " " + "\"" + tmp.getAbsolutePath() + "\"" + " --segment --idealRadius " + idealRadius;
+
+			Process p = r.exec(cmd);
+			p.waitFor();
+
+		if (p.exitValue() != 0) {
+				Utilities.showError("Could not segment image");
+				return false;
+			}
+		} catch (IOException e) {
+			Utilities.showError("Internal error: " + e.toString());
+		} catch (InterruptedException e) {
+			Utilities.showError("Internal error: " + e.toString());
+		}		
+		
+		
+		//Make some fancy dialog asking y or n
+		final JDialog dlg = new  JDialog(parentFrame,true);
+		dlg.setSize(800,600);
+		dlg.setFocusable(true);
+		JPanel content = new JPanel(new BorderLayout());
+		final ImagePanel imgPanel = new ImagePanel();
+		imgPanel.setImage(tmp.getAbsolutePath());
+		imgPanel.setScale(imgPanel.getDefaultScale() * 4.0);
+		
+		JScrollPane imgScroller = new JScrollPane(imgPanel);
+		final MyBoolean okPressed = new MyBoolean();
+	    final JButton cancelButton = new JButton("Go Back");
+	    cancelButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				okPressed.set(false);
+				dlg.setVisible(false);
+			}
+	    });
+
+	    final JButton okButton = new JButton("OK");
+	    okButton.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent arg0) {
+				okPressed.set(true);
+				dlg.setVisible(false);
+			}
+	    });	
+	    
+	    content.add(new JLabel("Is the image segmented properly? The rims of the plates should not appear. Only artifacts inside the plates should be visible."),  BorderLayout.NORTH);
+	    content.add(imgScroller, BorderLayout.CENTER);
+	    JPanel okCancelPanel = new JPanel();
+	    okCancelPanel.add(cancelButton);
+	    okCancelPanel.add(okButton);
+	    content.add(okCancelPanel, BorderLayout.SOUTH);
+	    dlg.setContentPane(content);
+	    dlg.setVisible(true);
+	    
+		return okPressed.get();
+	}
 	private boolean runStepTwo() {
 		//Create a modal dialog
 		final JDialog dlg = new  JDialog(parentFrame,true);
@@ -142,17 +223,8 @@ public class VPCParameterWizard {
 		JScrollPane imgScroller = new JScrollPane(imgPanel);
 		Utilities.standardBorder(content, "2) Set plate size");
 		final MyBoolean goToNextStep = new MyBoolean();
-		final JSlider sizeSlider = new JSlider(50,500);
+		final MyBoolean retry = new MyBoolean();
 	
-		
-		sizeSlider.addChangeListener(new ChangeListener() {
-
-			public void stateChanged(ChangeEvent e) {
-
-				int val = sizeSlider.getValue();
-				imgPanel.setCrossHairSize(val);
-			}
-		});
 		
 		
 	    final JButton cancelButton = new JButton("Cancel");
@@ -168,8 +240,13 @@ public class VPCParameterWizard {
 	    okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				goToNextStep.set(true);
+				goToNextStep.set(false);
 				dlg.setVisible(false);
+		        if(segmentationTest(imgPanel.getCrossHairSize())) {
+		        	goToNextStep.set(true);
+		        	return;
+		        }
+		        retry.set(true);
 			}
 	    });	
 
@@ -235,7 +312,13 @@ public class VPCParameterWizard {
 		content.add(okCancelPanel, BorderLayout.SOUTH);
 		
 		dlg.setContentPane(content);
-		dlg.setVisible(true);
+
+		//Keep retrying until user is OK with result
+		do {
+			retry.set(false); 
+		    dlg.setVisible(true); 
+		} while (retry.get());
+		
 		return goToNextStep.get();
 		
 	}
@@ -250,8 +333,9 @@ public class VPCParameterWizard {
 		return false;
 	}
 	
+	@SuppressWarnings("serial")
 	private class PlateSizeImagePanel extends ImagePanel {
-		private int crossHairSize = 360;
+		private int crossHairSize = 185;
 		private Point crossHairLocation = new Point(300,300);
 		public void setCrossHairSize(int sz) {
 			crossHairSize = sz;
@@ -276,7 +360,6 @@ public class VPCParameterWizard {
 	        	return;
 	        }
 		        
-	        System.out.println("repainting... " + crossHairLocation);
 	        
 	        //Make a scaled, local version of the crosshair
 	        double crossHairLocationX = Math.round(this.crossHairLocation.x * scale);
@@ -286,22 +369,22 @@ public class VPCParameterWizard {
 	        //Draw the crosshair
 	        //draw the x axis
 	        g.setColor(Color.WHITE);
-	        g.drawLine((int)(crossHairLocationX - Math.round(crossHairSizeScaled / 2.0)),
+	        g.drawLine((int)(crossHairLocationX - Math.round(crossHairSizeScaled)),
 	        		   (int)(crossHairLocationY),
-	        		   (int)(crossHairLocationX + Math.round(crossHairSizeScaled / 2.0)),
+	        		   (int)(crossHairLocationX + Math.round(crossHairSizeScaled)),
 	        		   (int)(crossHairLocationY));
 	        
 	        //draw the y axis
 	        g.drawLine((int)(crossHairLocationX ),
-	        		   (int)(crossHairLocationY - Math.round(crossHairSizeScaled / 2.0)),
+	        		   (int)(crossHairLocationY - Math.round(crossHairSizeScaled)),
 	        		   (int)(crossHairLocationX),
-	        		   (int)(crossHairLocationY + Math.round(crossHairSizeScaled / 2.0)));
+	        		   (int)(crossHairLocationY + Math.round(crossHairSizeScaled)));
 	        
 	        //Draw the oval around the xhair
-	        g.drawOval( (int)(crossHairLocationX - Math.round(crossHairSizeScaled / 2.0)),
-	        		    (int)(crossHairLocationY - Math.round(crossHairSizeScaled / 2.0)),
-	        		    (int) Math.round(crossHairSizeScaled),
-	        		    (int) Math.round(crossHairSizeScaled));
+	        g.drawOval( (int)(crossHairLocationX - Math.round(crossHairSizeScaled)),
+	        		    (int)(crossHairLocationY - Math.round(crossHairSizeScaled)),
+	        		    (int) Math.round(crossHairSizeScaled*2),
+	        		    (int) Math.round(crossHairSizeScaled*2));
 	    }  
 	}
 }
