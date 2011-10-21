@@ -447,7 +447,7 @@ public class VpcGui extends JFrame {
 		l.emptyRow();
 		l.row().bar().withOwnRowWidth().left(chooseFolderButton);
 		l.emptyRow();
-		currentFolderTextField.setColumns(50);
+		currentFolderTextField.setColumns(20);
 		currentFolderTextField.setEditable(false);
 		JPanel flowPanel = new JPanel();
 		flowPanel.add(Utilities.standardLabel("Selected Folder:"));

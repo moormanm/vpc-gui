@@ -22,11 +22,10 @@ public class VPCParameterWizard {
 
 	private BufferedImage tuningImage = null;
 	private File tuningImageFile = null;
-	private int userRows = 0;
-	private int userCols = 0;
+
 	private int userPlateRadius = 0;
-	private int userErosionFactor = 0;
-	private int userDilationFactor = 0;
+	private int userMaxPlaqueRadius = 0;
+	private int userMinPlaqueRadius = 0;
 	private JFrame parentFrame;
 
 	private int keyMult = 1;
@@ -38,10 +37,9 @@ public class VPCParameterWizard {
 			return null;
 		}
 
-		return new VPCParams().setCols(userCols).setRows(userRows)
-				.setPlateRadius(userPlateRadius)
-				.setErosionFactor(userErosionFactor)
-				.setDilationFactor(userDilationFactor);
+		return new VPCParams().
+				setPlateRadius(userPlateRadius);
+	
 
 	}
 
@@ -202,7 +200,8 @@ public class VPCParameterWizard {
 	    
 		return okPressed.get();
 	}
-	private boolean runStepTwo() {
+	
+	private Integer runGetParamDialog(String title, String instructions, int suggestedSize) {
 		//Create a modal dialog
 		final JDialog dlg = new  JDialog(parentFrame,true);
 		dlg.setFocusable(true);
@@ -211,67 +210,87 @@ public class VPCParameterWizard {
 		final PlateSizeImagePanel imgPanel = new PlateSizeImagePanel();
 		imgPanel.setImage(tuningImage);
 		imgPanel.setScale(imgPanel.getDefaultScale() * 4.0);
+		imgPanel.setCrossHairSize(suggestedSize);
 		JScrollPane imgScroller = new JScrollPane(imgPanel);
-		Utilities.standardBorder(content, "2) Set plate size");
+		Utilities.standardBorder(content, title);
+		
 		final MyBoolean goToNextStep = new MyBoolean();
-		final MyBoolean retry = new MyBoolean();
+		final MyBoolean cancel = new MyBoolean();
+		final Integer ret = new Integer(0);
 	
-		
-		
 	    final JButton cancelButton = new JButton("Cancel");
 	    cancelButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				goToNextStep.set(false);
+				cancel.set(true);
 				dlg.setVisible(false);
 			}
 	    });
 
-	    final JButton okButton = new JButton("Next Step");
+	    final JButton okButton = new JButton("OK");
 	    okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				goToNextStep.set(false);
-		        if(segmentationTest(imgPanel.getCrossHairSize())) {
-		        	goToNextStep.set(true);
-		        	dlg.setVisible(false);
-		        	return;
-		        }
-		        dlg.requestFocusInWindow();
-		        retry.set(true);
+		        dlg.setVisible(false);
 			}
 	    });	
 
-
 	    
 	    dlg.addKeyListener(imgPanel.keyListener);
-	 
 		JPanel okCancelPanel = new JPanel();
 		okCancelPanel.add(cancelButton);
 		okCancelPanel.add(okButton);
 		
-		content.add(Utilities.standardLabel("Use the arrow keys and the + and - keys to move and size the circular guide. The guide should be sized to cover an entire plate, but NOT including the bright edges."), BorderLayout.NORTH);
+		content.add(Utilities.standardLabel(instructions), BorderLayout.NORTH);
 		content.add(imgScroller, BorderLayout.CENTER);
 		content.add(okCancelPanel, BorderLayout.SOUTH);
 		
 		dlg.setContentPane(content);
-
 	
 		dlg.setVisible(true); 
+		if(cancel.get()) {
+			return null;
+		}
+		else return imgPanel.getCrossHairSize();
+	}
 	
+	private boolean runStepTwo() {
 		
-		return goToNextStep.get();
+	    Integer ret = runGetParamDialog("2) Set Plate Size.", 
+	    		"<html>Use the arrow keys and the + and - keys to move and size the circular guide.<br/> The guide should be sized to cover an entire plate, but NOT including the bright edges.</html>",
+	    		185);
+		if(ret == null) {
+			return false;
+		}
+	    if(segmentationTest(ret)) {
+	    	userPlateRadius = ret;
+	    	return true;
+	    }
+	    //recurse please
+		return runStepTwo();
 		
 	}
 
 	private boolean runStepThree() {
-		// TODO Auto-generated method stub
-		return false;
+		Integer ret = runGetParamDialog("3) Set Maximum Plaque Size",
+				                        "<html>Set the maximum plaque size.</html>",
+				                        25);
+		if(ret == null) {
+			return false;
+		}
+		userMaxPlaqueRadius = ret;
+		return true;
 	}
 
 	private boolean runStepFour() {
-		// TODO Auto-generated method stub
-		return false;
+			Integer ret = runGetParamDialog("4) Set Minimum Plaque Size", 
+					                        "<html>Set the minimum plaque size.</html>",
+					                        10);
+			if(ret == null) {
+				return false;
+			}
+			userMinPlaqueRadius = ret;
+			return true;
 	}
 	
 	@SuppressWarnings("serial")
@@ -353,11 +372,11 @@ public class VPCParameterWizard {
 			        	keyMult++;
 			            break;
 			        case KeyEvent.VK_ADD :
-			        	setCrossHairSize(sz + keyMult);
+			        	setCrossHairSize(Math.min(600, sz + keyMult));
 			        	keyMult++;
 			        	break;
 			        case KeyEvent.VK_SUBTRACT :
-			        	setCrossHairSize(sz - keyMult);
+			        	setCrossHairSize(Math.max(0, sz - keyMult));
 			        	keyMult++;
 			        	break;
 			     }
