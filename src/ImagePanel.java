@@ -14,7 +14,11 @@ class ImagePanel extends JPanel
 	
 
 	
-    protected BufferedImage image;  
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	protected BufferedImage image;  
     protected double scale;  
 
     
