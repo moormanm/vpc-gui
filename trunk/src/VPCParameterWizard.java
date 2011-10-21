@@ -242,58 +242,9 @@ public class VPCParameterWizard {
 			}
 	    });	
 
-	    KeyListener keyListener = new KeyListener() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				int ptx = imgPanel.getCrossHairLocation().x;
-				int pty = imgPanel.getCrossHairLocation().y;
-				int sz = imgPanel.getCrossHairSize();
-			    int keyCode = e.getKeyCode();
-			    switch( keyCode ) { 
-			        case KeyEvent.VK_UP:
-			        	imgPanel.setCrossHairLocation(new Point(ptx, pty-keyMult));
-			        	keyMult++;
-			            break;
-			        case KeyEvent.VK_DOWN:
-			        	imgPanel.setCrossHairLocation(new Point(ptx, pty+keyMult));
-			        	keyMult++;
-			            break;
-			        case KeyEvent.VK_LEFT:
-			        	imgPanel.setCrossHairLocation(new Point(ptx-keyMult, pty));
-			        	keyMult++;
-			            break;
-			        case KeyEvent.VK_RIGHT :
-			        	imgPanel.setCrossHairLocation(new Point(ptx+keyMult, pty));
-			        	keyMult++;
-			            break;
-			        case KeyEvent.VK_ADD :
-			        	imgPanel.setCrossHairSize(sz + keyMult);
-			        	keyMult++;
-			        	break;
-			        case KeyEvent.VK_SUBTRACT :
-			        	imgPanel.setCrossHairSize(sz - keyMult);
-			        	keyMult++;
-			        	break;
-			     }
-			    //enforce Max key mult 
-			    keyMult = Math.min(keyMult, 20);
-			}
-			
 
-			@Override
-			public void keyReleased(KeyEvent e) {
-				//reset the key multiplier when release is detected
-				keyMult = 1;
-			}
-
-			@Override
-			public void keyTyped(KeyEvent arg0) {
-				// TODO Auto-generated method stub
-				
-			}
-	    };
 	    
-	    dlg.addKeyListener(keyListener);
+	    dlg.addKeyListener(imgPanel.keyListener);
 	 
 		JPanel okCancelPanel = new JPanel();
 		okCancelPanel.add(cancelButton);
@@ -376,5 +327,58 @@ public class VPCParameterWizard {
 	        		    (int) Math.round(crossHairSizeScaled*2),
 	        		    (int) Math.round(crossHairSizeScaled*2));
 	    }  
+	    
+	   public KeyListener keyListener = new KeyListener() {
+			@Override
+			public void keyPressed(KeyEvent e) {
+				int ptx = getCrossHairLocation().x;
+				int pty = getCrossHairLocation().y;
+				int sz = getCrossHairSize();
+			    int keyCode = e.getKeyCode();
+			    switch( keyCode ) { 
+			        case KeyEvent.VK_UP:
+			        	setCrossHairLocation(new Point(ptx, pty-keyMult));
+			        	keyMult++;
+			            break;
+			        case KeyEvent.VK_DOWN:
+			        	setCrossHairLocation(new Point(ptx, pty+keyMult));
+			        	keyMult++;
+			            break;
+			        case KeyEvent.VK_LEFT:
+			        	setCrossHairLocation(new Point(ptx-keyMult, pty));
+			        	keyMult++;
+			            break;
+			        case KeyEvent.VK_RIGHT :
+			        	setCrossHairLocation(new Point(ptx+keyMult, pty));
+			        	keyMult++;
+			            break;
+			        case KeyEvent.VK_ADD :
+			        	setCrossHairSize(sz + keyMult);
+			        	keyMult++;
+			        	break;
+			        case KeyEvent.VK_SUBTRACT :
+			        	setCrossHairSize(sz - keyMult);
+			        	keyMult++;
+			        	break;
+			     }
+			    //enforce Max key mult 
+			    keyMult = Math.min(keyMult, 20);
+			}
+			
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+				//reset the key multiplier when release is detected
+				keyMult = 1;
+			}
+
+			@Override
+			public void keyTyped(KeyEvent arg0) {
+				// TODO Auto-generated method stub
+				
+			}
+	    };
+	    
+	    
 	}
 }
