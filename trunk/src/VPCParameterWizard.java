@@ -1,6 +1,5 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -8,12 +7,8 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.Vector;
-
 import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
@@ -21,14 +16,10 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSlider;
 import javax.swing.JTextField;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 
 public class VPCParameterWizard {
 
-	private BufferedImage tuningPlate = null;
 	private BufferedImage tuningImage = null;
 	private File tuningImageFile = null;
 	private int userRows = 0;
@@ -155,7 +146,7 @@ public class VPCParameterWizard {
 		String launcherPath = this.getClass().getResource("vpc.exe").getPath();
 		Runtime r = Runtime.getRuntime();
 		try {
-			String cmd = launcherPath + " " + "\"" + tmp.getAbsolutePath() + "\"" + " --segment --idealRadius " + idealRadius;
+			String cmd = launcherPath + " " + "\"" + tmp.getAbsolutePath() + "\"" + " --segment --plateRadius " + idealRadius;
 
 			Process p = r.exec(cmd);
 			p.waitFor();
@@ -241,11 +232,12 @@ public class VPCParameterWizard {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				goToNextStep.set(false);
-				dlg.setVisible(false);
 		        if(segmentationTest(imgPanel.getCrossHairSize())) {
 		        	goToNextStep.set(true);
+		        	dlg.setVisible(false);
 		        	return;
 		        }
+		        dlg.requestFocusInWindow();
 		        retry.set(true);
 			}
 	    });	
@@ -313,11 +305,9 @@ public class VPCParameterWizard {
 		
 		dlg.setContentPane(content);
 
-		//Keep retrying until user is OK with result
-		do {
-			retry.set(false); 
-		    dlg.setVisible(true); 
-		} while (retry.get());
+	
+		dlg.setVisible(true); 
+	
 		
 		return goToNextStep.get();
 		

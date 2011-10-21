@@ -262,7 +262,7 @@ public class VpcGui extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			VPCParams tmp = new VPCParameterWizard().run(topFrame);
+			new VPCParameterWizard().run(topFrame);
 			
 			
 		}
@@ -294,8 +294,6 @@ public class VpcGui extends JFrame {
 			if (e.getValueIsAdjusting()) {
 				return;
 			}
-			int first = 0, last;
-
 			int rowIndex = fileNameTable.getSelectedRow();
 			if (rowIndex == -1)
 				return;
