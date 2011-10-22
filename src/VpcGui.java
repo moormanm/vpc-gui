@@ -1,5 +1,6 @@
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FileDialog;
 import java.awt.FlowLayout;
 
 import java.awt.GraphicsEnvironment;
@@ -11,8 +12,11 @@ import java.awt.event.ComponentEvent;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -28,6 +32,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
@@ -56,13 +61,13 @@ public class VpcGui extends JFrame {
 		});
 	}
 
-	private VPCParams currentParameters = new VPCParams();
+	private VPCParams currentParameters = null;
+	private JLabel currentParametersName = new JLabel("None");
 	
 	private JButton chooseFolderButton = new JButton("Choose Folder");
 	private JButton countAllButton = new JButton("Count All");
 	private JButton countSelectedButton = new JButton("Count Selected");
 	private JTextField currentFolderTextField = new JTextField();
-	private JButton stopButton = new JButton("Stop");
 	private DefaultTableModel model = new DefaultTableModel();
 	private JTable fileNameTable = new JTable(model) {
 		public boolean isCellEditable(int rowIndex, int colIndex) {
@@ -73,10 +78,7 @@ public class VpcGui extends JFrame {
 	private JButton newCalibrationButton = new JButton("New");
 	private JButton loadCalibrationButton = new JButton("Load");
 	private JButton saveCalibrationButton = new JButton("Save");
-	private JLabel rowsCalibrationLabel = new JLabel();
-	private JLabel columnsCalibrationLabel = new JLabel();
-	private JLabel apdCalibrationLabel = new JLabel();
-	private JLabel pdCalibrationLabel = new JLabel();
+
 	private ImagePanel imagePanel = new ImagePanel();
 	private Vector<JLabel> resultsLabels = new Vector<JLabel>();
 	private JPanel CountPlaquesPanel = new JPanel();
@@ -262,12 +264,87 @@ public class VpcGui extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			new VPCParameterWizard().run(topFrame);
+			VPCParams params = new VPCParameterWizard().run(topFrame);
+			if(params == null) {
+				return;
+			}
+			//Pop up a dialog asking the user to name the parameters
+			  String response = JOptionPane.showInputDialog(null,
+					  "Name this parameter set.",
+					  "Enter a name.",
+					  JOptionPane.QUESTION_MESSAGE);
+			  currentParametersName.setText(response);
+			  
+			  params.setName(response);
 			
+			  currentParameters = params;
+			  updateUI();
 			
 		}
 		
 	}
+	
+	void updateUI() {
+		//update the params label
+		currentParametersName.setText( currentParameters != null ? currentParameters.name : "None");
+		
+		//allow the count buttons and save param button when parameters are chosen
+		boolean val = currentParameters != null ? true : false;
+		System.out.println("Hi val is " + val);
+		countSelectedButton.setEnabled(val);
+		countAllButton.setEnabled(val);
+		saveCalibrationButton.setEnabled(val);
+		
+		
+		
+	}
+	private class SaveCalibrationButtonHandler implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			 JFileChooser jfc = new JFileChooser();
+			 File f = new File(currentParameters.name + ".xml");
+			 jfc.setSelectedFile(f);
+			 int ret = jfc.showSaveDialog(null);
+			 if(ret != JFileChooser.APPROVE_OPTION) {
+				 return;
+			 }
+			 
+			 try {
+				 FileOutputStream fos = new FileOutputStream(jfc.getSelectedFile());
+				currentParameters.storeToXml(fos, "This is a parameter set for VPC");
+				Utilities.showInfo( "Successfully saved parameters to file.", "");
+			} catch (IOException e1) {
+				Utilities.showError("Could not open file for writing.");
+				return;
+			}
+		}
+	}
+	
+	private class LoadCalibrationButtonHandler implements ActionListener {
+
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			 JFileChooser jfc = new JFileChooser();
+			 
+			 
+			 int ret = jfc.showOpenDialog(null);
+			 if(ret != JFileChooser.APPROVE_OPTION) {
+				 return;
+			 }
+			 
+			 try {
+				 FileInputStream fis = new FileInputStream(jfc.getSelectedFile());
+				 currentParameters = VPCParams.loadFromXml(fis);
+				 
+				 updateUI();
+			} catch (IOException e1) {
+				Utilities.showError("Could not read file.");
+				return;
+			}
+		}
+	}
+	
 	
 	private class FolderButtonHandler implements ActionListener {
 		@Override
@@ -325,9 +402,11 @@ public class VpcGui extends JFrame {
 		Runtime r = Runtime.getRuntime();
 		String launcherPath = this.getClass().getResource("vpc.exe").getPath();
 		try {
-			String cmd = launcherPath + " " + "\""
-					+ f.getAbsolutePath() + "\"";
+			String cmd = launcherPath + " " + "--img \""
+					+ f.getAbsolutePath() + "\" --plateRadius " + params.plateRadius + " --maxPlaqueRadius " + params.maxPlaqueRadius +
+					" --minPlaqueRadius " + params.minPlaqueRadius ;//+ " --debug";
 
+			System.out.println(cmd);
 			Process p = r.exec(cmd);
 			BufferedReader stdout = new BufferedReader(new InputStreamReader(
 					p.getInputStream()));
@@ -380,6 +459,12 @@ public class VpcGui extends JFrame {
 		// New parameters action
 		newCalibrationButton.addActionListener(new NewCalibrationButtonHandler());
 		
+		// Save params
+		saveCalibrationButton.addActionListener(new SaveCalibrationButtonHandler());
+		
+		//Load params
+		loadCalibrationButton.addActionListener(new LoadCalibrationButtonHandler());
+	
 		// Create table model columns
 		model.addColumn("File name");
 		fileNameTable.getSelectionModel().addListSelectionListener(
@@ -460,16 +545,9 @@ public class VpcGui extends JFrame {
 		l.row()
 				.bar()
 				.withOwnRowWidth()
-				.center(newCalibrationButton, loadCalibrationButton,
+				.left(newCalibrationButton, loadCalibrationButton,
 						saveCalibrationButton);
-		l.row().left().add(Utilities.standardLabel("Rows:"), rowsCalibrationLabel);
-		l.row().left().add(Utilities.standardLabel("Columns:"), columnsCalibrationLabel);
-		l.row()
-				.left()
-				.add(Utilities.standardLabel("Average Plaque Diameter:"),
-						apdCalibrationLabel);
-		l.row().left()
-				.add(Utilities.standardLabel("Plate Diameter:"), pdCalibrationLabel);
+		l.row().left().add(Utilities.standardLabel("Currently Loaded Parameters:")).add(currentParametersName);
 
 		// Build the Images panel
 		ImagesPanel.setLayout(new BorderLayout());
@@ -481,8 +559,7 @@ public class VpcGui extends JFrame {
 		ResultsPanel.setLayout(new BorderLayout());
 		JPanel tmpPanel = new JPanel();
 		l = new DesignGridLayout(tmpPanel);
-		l.row().left().add(countAllButton).add(countSelectedButton)
-				.add(stopButton);
+		l.row().left().add(countAllButton).add(countSelectedButton);
 
 		slider.addChangeListener(new ChangeListener() {
 
@@ -514,6 +591,7 @@ public class VpcGui extends JFrame {
 		this.add(outer);
 
 		this.pack();
+		updateUI();
 	}
 
 	public void displayResults(VPCResult res) {
