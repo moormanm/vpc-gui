@@ -38,7 +38,9 @@ public class VPCParameterWizard {
 		}
 
 		return new VPCParams().
-				setPlateRadius(userPlateRadius);
+				setPlateRadius(userPlateRadius).
+				setMaxPlaqueRadius(userMaxPlaqueRadius).
+				setMinPlaqueRadius(userMinPlaqueRadius);
 	
 
 	}
@@ -189,7 +191,7 @@ public class VPCParameterWizard {
 			}
 	    });	
 	    
-	    content.add(new JLabel("Is the image segmented properly? The rims of the plates should not appear. Only artifacts inside the plates should be visible."),  BorderLayout.NORTH);
+	    content.add(Utilities.standardLabel("<html>Is the image segmented properly? The rims of the plates should not appear. <br/> Only artifacts inside the plates should be visible.</html>"),  BorderLayout.NORTH);
 	    content.add(imgScroller, BorderLayout.CENTER);
 	    JPanel okCancelPanel = new JPanel();
 	    okCancelPanel.add(cancelButton);
@@ -292,6 +294,8 @@ public class VPCParameterWizard {
 			userMinPlaqueRadius = ret;
 			return true;
 	}
+	
+
 	
 	@SuppressWarnings("serial")
 	private class PlateSizeImagePanel extends ImagePanel {
