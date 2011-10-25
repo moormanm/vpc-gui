@@ -396,16 +396,42 @@ public class VpcGui extends JFrame {
 
 	private VPCResult vpcExec(File f, VPCParams params) {
 
+		File tmpFile = null;
+		
+		//cludge for arg parsing problem
+		if(f.getAbsolutePath().contains(" -")) {
+			try {
+				tmpFile = File.createTempFile("tmpImage", f.getName().substring(f.getName().lastIndexOf(".")));
+				Utilities.copyFile(f, tmpFile);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 		Vector<Vector<Integer>> ret = new Vector<Vector<Integer>>();
 		VPCResult res = new VPCResult();
 
 		Runtime r = Runtime.getRuntime();
+		String imgPath = (tmpFile == null) ? f.getAbsolutePath() : tmpFile.getAbsolutePath();
+		
 		String launcherPath = this.getClass().getResource("vpc.exe").getPath();
 		try {
 			String cmd = launcherPath + " " + "--img \""
-					+ f.getAbsolutePath() + "\" --plateRadius " + params.plateRadius + " --maxPlaqueRadius " + params.maxPlaqueRadius +
-					" --minPlaqueRadius " + params.minPlaqueRadius ;//+ " --debug";
-
+					+ imgPath + "\" --plateRadius " + params.plateRadius + " --maxPlaqueRadius " + params.maxPlaqueRadius +
+					" --minPlaqueRadius " + params.minPlaqueRadius;
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
+			
 			System.out.println(cmd);
 			Process p = r.exec(cmd);
 			BufferedReader stdout = new BufferedReader(new InputStreamReader(
@@ -416,11 +442,17 @@ public class VpcGui extends JFrame {
 			} catch (InterruptedException e) {
 				Utilities.showError("Failed to count plaques for file: " + f + " : " + e);
 			}
+			
+			if(tmpFile != null) {
+				tmpFile.delete();
+			}
 
+			
 			if (p.exitValue() != 0) {
 				System.out.println("Bad ret value for " + f);
-				System.out.println(cmd);
+				System.out.println(p.exitValue());
 				res.errMsg = "Could not process image.";
+
 				return res;
 			}
 
@@ -442,6 +474,8 @@ public class VpcGui extends JFrame {
 		} catch (IOException e) {
 			Utilities.showError("Internal error: " + e.toString());
 		}
+		
+		
 		res.count = ret;
 		return res;
 	}
