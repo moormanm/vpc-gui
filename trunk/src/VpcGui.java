@@ -398,8 +398,9 @@ public class VpcGui extends JFrame {
 
 		File tmpFile = null;
 		
-		//cludge for arg parsing problem
-		if(f.getAbsolutePath().contains(" -")) {
+		//There seems to be a problem with passing a file that has a space followed by a
+		//hyphen when calling command line vpc. Copy the file to a temp file if this is the case.
+		if(f.getAbsolutePath().contains(" ")) {
 			try {
 				tmpFile = File.createTempFile("tmpImage", f.getName().substring(f.getName().lastIndexOf(".")));
 				Utilities.copyFile(f, tmpFile);
@@ -420,17 +421,6 @@ public class VpcGui extends JFrame {
 			String cmd = launcherPath + " " + "--img \""
 					+ imgPath + "\" --plateRadius " + params.plateRadius + " --maxPlaqueRadius " + params.maxPlaqueRadius +
 					" --minPlaqueRadius " + params.minPlaqueRadius;
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
-			
 			
 			System.out.println(cmd);
 			Process p = r.exec(cmd);
