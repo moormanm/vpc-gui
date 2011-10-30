@@ -13,7 +13,7 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
+
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
@@ -220,9 +220,9 @@ public class VPCParameterWizard {
 		JScrollPane imgScroller = new JScrollPane(imgPanel);
 		Utilities.standardBorder(content, title);
 		
-		final MyBoolean goToNextStep = new MyBoolean();
+
 		final MyBoolean cancel = new MyBoolean();
-		final Integer ret = new Integer(0);
+
 	
 	    final JButton cancelButton = new JButton("Cancel");
 	    cancelButton.addActionListener(new ActionListener() {
