@@ -64,6 +64,7 @@ public class VpcGui extends JFrame {
 	private VPCParams currentParameters = null;
 	private JLabel currentParametersName = new JLabel("None");
 	
+	private JMenuItem saveResultsToFileMenuItem =  new JMenuItem("Save Results to File"); 
 	private JButton chooseFolderButton = new JButton("Choose Folder");
 	private JButton countAllButton = new JButton("Count All");
 	private JButton countSelectedButton = new JButton("Count Selected");
@@ -95,9 +96,9 @@ public class VpcGui extends JFrame {
 		JMenu fileMenu = new JMenu("File");
 		//JMenu viewMenu = new JMenu("View");
 		//JMenu helpMenu = new JMenu("Help");
-		JMenuItem menuItem = new JMenuItem("Save Results to File");
-		fileMenu.add(menuItem);
-		menuItem.addActionListener(new ActionListener() {
+		
+		fileMenu.add(saveResultsToFileMenuItem);
+		saveResultsToFileMenuItem.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent e) {
@@ -123,8 +124,8 @@ public class VpcGui extends JFrame {
 
 				// Write out the header
 				int maxWells = 0;
-
-				for (VPCResult r : results.values()) {
+				HashMap<String, VPCResult> onScreenResults = getOnScreenResults();
+				for (VPCResult r : onScreenResults.values()) {
 					int tmpWells = 0;
 					if(r.count == null) {
 						continue;
@@ -141,8 +142,9 @@ public class VpcGui extends JFrame {
 						out.append("W" + i + ",");
 					}
 					out.append(Utilities.newLine);
-					for (String fileName : results.keySet()) {
-						VPCResult r = results.get(fileName);
+					
+					for (String fileName : onScreenResults.keySet()) {
+						VPCResult r = onScreenResults.get(fileName);
 						out.append(fileName + ",");
 						if(r.count == null) {
 							out.append(Utilities.newLine);
@@ -172,7 +174,7 @@ public class VpcGui extends JFrame {
 		//menuItem = new JMenuItem("Generate Report");
 		//fileMenu.add(menuItem);
 
-		menuItem = new JMenuItem("About");
+        //menuItem = new JMenuItem("About");
 		//helpMenu.add(menuItem);
 
 		menuBar.add(fileMenu);
@@ -292,8 +294,10 @@ public class VpcGui extends JFrame {
 		boolean val = currentParameters != null ? true : false;
 		
 		countSelectedButton.setEnabled(val);
-		countAllButton.setEnabled(val);
+		//countAllButton.setEnabled(val);
 		saveCalibrationButton.setEnabled(val);
+		
+		saveResultsToFileMenuItem.setEnabled(getOnScreenResults().size() != 0);
 		
 		
 		
@@ -583,7 +587,7 @@ public class VpcGui extends JFrame {
 		ResultsPanel.setLayout(new BorderLayout());
 		JPanel tmpPanel = new JPanel();
 		l = new DesignGridLayout(tmpPanel);
-		l.row().left().add(countAllButton).add(countSelectedButton);
+		l.row().left().add(countSelectedButton);
 
 		slider.addChangeListener(new ChangeListener() {
 
@@ -620,6 +624,18 @@ public class VpcGui extends JFrame {
 		updateUI();
 	}
 
+	public HashMap<String, VPCResult> getOnScreenResults() {
+		HashMap<String, VPCResult> ret = new HashMap<String, VPCResult>();
+		for (int i = 0; i < model.getRowCount(); i++) {
+			File f = (File) model.getValueAt(i, 0);
+			if(results.containsKey(f.toString())) {
+				ret.put(f.toString(), results.get(f.toString()));
+			}
+		}
+
+		return ret;
+	}
+	
 	public void displayResults(VPCResult res) {
 
 		for (int i = 0; i < resultsLabels.size(); i++)
