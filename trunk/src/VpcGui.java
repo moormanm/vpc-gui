@@ -1,6 +1,6 @@
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.FileDialog;
+
 import java.awt.FlowLayout;
 
 import java.awt.GraphicsEnvironment;
@@ -12,7 +12,7 @@ import java.awt.event.ComponentEvent;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
