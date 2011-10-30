@@ -93,8 +93,8 @@ public class VpcGui extends JFrame {
 	private JMenuBar makeMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu fileMenu = new JMenu("File");
-		JMenu viewMenu = new JMenu("View");
-		JMenu helpMenu = new JMenu("Help");
+		//JMenu viewMenu = new JMenu("View");
+		//JMenu helpMenu = new JMenu("Help");
 		JMenuItem menuItem = new JMenuItem("Save Results to File");
 		fileMenu.add(menuItem);
 		menuItem.addActionListener(new ActionListener() {
@@ -169,15 +169,15 @@ public class VpcGui extends JFrame {
 			
 		});
 
-		menuItem = new JMenuItem("Generate Report");
-		fileMenu.add(menuItem);
+		//menuItem = new JMenuItem("Generate Report");
+		//fileMenu.add(menuItem);
 
 		menuItem = new JMenuItem("About");
-		helpMenu.add(menuItem);
+		//helpMenu.add(menuItem);
 
 		menuBar.add(fileMenu);
-		menuBar.add(viewMenu);
-		menuBar.add(helpMenu);
+		//menuBar.add(viewMenu);
+		//menuBar.add(helpMenu);
 		return menuBar;
 	}
 
