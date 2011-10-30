@@ -1,7 +1,9 @@
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FontMetrics;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -26,7 +28,7 @@ class ImagePanel extends JPanel
     public ImagePanel()  
     {    
         scale = 1.0;  
-        setBackground(Color.black); 
+        //setBackground(Color.black); 
 
     }  
    
@@ -34,8 +36,18 @@ class ImagePanel extends JPanel
 	protected void paintComponent(Graphics g)  
     {  
         super.paintComponent(g);
-        if(image == null) {
-        	return;
+        if(image == null || realImage == null) {
+           Graphics2D g2 = (Graphics2D)g;
+           g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
+                   RenderingHints.VALUE_ANTIALIAS_ON);
+           g.setFont(Defaults.LABEL_FONT);
+           FontMetrics fm = g2.getFontMetrics();
+           String msg = "No Image Loaded";
+           g.drawString(msg, 
+        		         getWidth()/2 - fm.stringWidth(msg)/2,
+        		         getHeight()/2 + fm.getAscent() /2 - 1 );
+
+           return;
         }
         
         
@@ -113,7 +125,6 @@ class ImagePanel extends JPanel
         catch(Exception e)  
         {  
         	realImage = null;
-        	return;
         }
         
 

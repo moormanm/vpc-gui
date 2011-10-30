@@ -290,7 +290,7 @@ public class VpcGui extends JFrame {
 		
 		//allow the count buttons and save param button when parameters are chosen
 		boolean val = currentParameters != null ? true : false;
-		System.out.println("Hi val is " + val);
+		
 		countSelectedButton.setEnabled(val);
 		countAllButton.setEnabled(val);
 		saveCalibrationButton.setEnabled(val);
@@ -594,7 +594,9 @@ public class VpcGui extends JFrame {
 			}
 		});
 		l.row().left().withOwnRowWidth().add(slider);
-		imageScroller = new JScrollPane(imagePanel);
+		imageScroller = new JScrollPane(imagePanel, 
+				                        JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, 
+                                        JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		imageScroller.setPreferredSize(new Dimension(610, 400));
 		imageScroller.setWheelScrollingEnabled(false);
 		l.row().left().withOwnRowWidth().add(imageScroller);
