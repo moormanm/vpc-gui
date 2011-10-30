@@ -81,6 +81,10 @@ public class VPCParameterWizard {
 	    okButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
+				if(imgPanel.getImage() == null) {
+					Utilities.showError("No image selected. Select an image.");
+					return;
+				}
 				goToNextStep.set(true);
 				dlg.setVisible(false);
 			}
