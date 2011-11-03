@@ -1,6 +1,7 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
+import java.awt.GridLayout;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,10 +14,13 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JSlider;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 
 public class VPCParameterWizard {
 
@@ -67,6 +71,18 @@ public class VPCParameterWizard {
 		Utilities.standardBorder(content, "1) Choose the image to use for parameter tuning.");
 	    final JTextField selectedFileTextField = new JTextField();
 	    final MyBoolean goToNextStep = new MyBoolean();
+	    final JSlider slider = new JSlider(0,5);
+	    slider.setValue(0);
+	    slider.setFocusable(false);
+		slider.addChangeListener(new ChangeListener() {
+
+			public void stateChanged(ChangeEvent e) {
+
+				int val = slider.getValue();
+				imgPanel.setScale(imgPanel.getDefaultScale() + val / 5.0);
+			}
+		});
+		
 	    
 	    final JButton cancelButton = new JButton("Cancel");
 	    cancelButton.addActionListener(new ActionListener() {
@@ -108,22 +124,30 @@ public class VPCParameterWizard {
 					tuningImage = imgPanel.getImage();
 					if(tuningImage != null) {
 						tuningImageFile = new File(selectedFileTextField.getText());
+						slider.setValue(0);
 					}
+					
 				} else { 
 					tuningImage = null;
 					return;
 				}
 			}		
 		});
+		
+		JPanel grid = new JPanel(new GridLayout(2,1));
 		flowPanel.add(chooseButton);
 		flowPanel.add(Utilities.standardLabel("Selected Image:"));
 		flowPanel.add(selectedFileTextField);
+		grid.add(flowPanel);
+		grid.add(slider);
+		
 		
 		JPanel okCancelPanel = new JPanel();
 		okCancelPanel.add(cancelButton);
 		okCancelPanel.add(okButton);
 		
-		content.add(flowPanel, BorderLayout.NORTH);
+	
+		content.add(grid, BorderLayout.NORTH);
 		JScrollPane imgScroller = new JScrollPane(imgPanel);
 		content.add(imgScroller, BorderLayout.CENTER);
 		content.add(okCancelPanel, BorderLayout.SOUTH);
@@ -214,6 +238,18 @@ public class VPCParameterWizard {
 		dlg.setSize(800,600);
 		JPanel content = new JPanel(new BorderLayout());
 		final PlateSizeImagePanel imgPanel = new PlateSizeImagePanel();
+		final JSlider slider = new JSlider(0,5);
+		slider.setValue(0);
+		slider.setFocusable(false);
+		slider.addChangeListener(new ChangeListener() {
+
+			public void stateChanged(ChangeEvent e) {
+
+				int val = slider.getValue();
+				imgPanel.setScale(imgPanel.getDefaultScale() + val / 5.0);
+			}
+		});
+		
 		imgPanel.setImage(tuningImage);
 		imgPanel.setScale(imgPanel.getDefaultScale() * 4.0);
 		imgPanel.setCrossHairSize(suggestedSize);
@@ -247,7 +283,10 @@ public class VPCParameterWizard {
 		okCancelPanel.add(cancelButton);
 		okCancelPanel.add(okButton);
 		
-		content.add(Utilities.standardLabel(instructions), BorderLayout.NORTH);
+		JPanel grid = new JPanel(new GridLayout(2,1));
+		grid.add(Utilities.standardLabel(instructions));
+		grid.add(slider);
+		content.add(grid, BorderLayout.NORTH);
 		content.add(imgScroller, BorderLayout.CENTER);
 		content.add(okCancelPanel, BorderLayout.SOUTH);
 		

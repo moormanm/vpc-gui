@@ -270,17 +270,23 @@ public class VpcGui extends JFrame {
 			if(params == null) {
 				return;
 			}
+			String response = "";
+			
+			while(response.length() == 0) {
 			//Pop up a dialog asking the user to name the parameters
-			  String response = JOptionPane.showInputDialog(null,
+			  response = JOptionPane.showInputDialog(null,
 					  "Name this parameter set.",
 					  "Enter a name.",
 					  JOptionPane.QUESTION_MESSAGE);
-			  currentParametersName.setText(response);
-			  
-			  params.setName(response);
+			}
 			
-			  currentParameters = params;
-			  updateUI();
+			
+			currentParametersName.setText(response);
+			params.setName(response);
+			
+			currentParameters = params;
+			updateUI();
+			  
 			
 		}
 		
@@ -424,7 +430,7 @@ public class VpcGui extends JFrame {
 		try {
 			String cmd = launcherPath + " " + "--img \""
 					+ imgPath + "\" --plateRadius " + params.plateRadius + " --maxPlaqueRadius " + params.maxPlaqueRadius +
-					" --minPlaqueRadius " + params.minPlaqueRadius;
+					" --minPlaqueRadius " + params.minPlaqueRadius ;
 			
 			System.out.println(cmd);
 			Process p = r.exec(cmd);
