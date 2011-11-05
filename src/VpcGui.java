@@ -1,4 +1,5 @@
 import java.awt.BorderLayout;
+import java.awt.Cursor;
 import java.awt.Dimension;
 
 import java.awt.FlowLayout;
@@ -63,8 +64,9 @@ public class VpcGui extends JFrame {
 
 	private VPCParams currentParameters = null;
 	private JLabel currentParametersName = new JLabel("None");
-	
-	private JMenuItem saveResultsToFileMenuItem =  new JMenuItem("Save Results to File"); 
+
+	private JMenuItem saveResultsToFileMenuItem = new JMenuItem(
+			"Save Results to File");
 	private JButton chooseFolderButton = new JButton("Choose Folder");
 	private JButton countAllButton = new JButton("Count All");
 	private JButton countSelectedButton = new JButton("Count Selected");
@@ -75,6 +77,24 @@ public class VpcGui extends JFrame {
 			return false; // Disallow the editing of any cell
 		}
 	};
+
+	private class FileEntry {
+
+		private final File f;
+
+		public File getFile() {
+			return f;
+		}
+
+		public FileEntry(File f) {
+			this.f = f;
+		}
+
+		public String toString() {
+			return f.getName();
+		}
+	}
+
 	private JSlider slider = new JSlider(0, 5);
 	private JButton newCalibrationButton = new JButton("New");
 	private JButton loadCalibrationButton = new JButton("Load");
@@ -90,13 +110,12 @@ public class VpcGui extends JFrame {
 
 	private JFrame topFrame = new JFrame();
 
-
 	private JMenuBar makeMenuBar() {
 		JMenuBar menuBar = new JMenuBar();
 		JMenu fileMenu = new JMenu("File");
-		//JMenu viewMenu = new JMenu("View");
-		//JMenu helpMenu = new JMenu("Help");
-		
+		// JMenu viewMenu = new JMenu("View");
+		// JMenu helpMenu = new JMenu("Help");
+
 		fileMenu.add(saveResultsToFileMenuItem);
 		saveResultsToFileMenuItem.addActionListener(new ActionListener() {
 
@@ -106,19 +125,24 @@ public class VpcGui extends JFrame {
 				FileWriter out = null;
 				// Run the save file dialog
 				JFileChooser chooser = new JFileChooser();
-				;
+				chooser.setCurrentDirectory(Defaults.fileChooserDir);
 				int returnVal = chooser.showSaveDialog(null);
 				if (returnVal != JFileChooser.APPROVE_OPTION) {
 					return;
 				}
-				File saveFile = new File(chooser.getSelectedFile().getPath()
-						+ ".csv");
+				File saveFile = null;
+				if (chooser.getSelectedFile().getPath().endsWith((".csv"))) {
+					saveFile = new File(chooser.getSelectedFile().getPath());
+				} else {
+					saveFile = new File(chooser.getSelectedFile().getPath()
+							+ ".csv");
+				}
+
 				try {
 
 					out = new FileWriter(saveFile);
 				} catch (IOException e1) {
-					Utilities.showError("Could not create file: "
-							+ e);
+					Utilities.showError("Could not create file: " + e);
 					return;
 				}
 
@@ -127,7 +151,7 @@ public class VpcGui extends JFrame {
 				HashMap<String, VPCResult> onScreenResults = getOnScreenResults();
 				for (VPCResult r : onScreenResults.values()) {
 					int tmpWells = 0;
-					if(r.count == null) {
+					if (r.count == null) {
 						continue;
 					}
 					for (Vector<Integer> row : r.count) {
@@ -142,11 +166,13 @@ public class VpcGui extends JFrame {
 						out.append("W" + i + ",");
 					}
 					out.append(Utilities.newLine);
-					
+
 					for (String fileName : onScreenResults.keySet()) {
+						File f = new File(fileName);
+
 						VPCResult r = onScreenResults.get(fileName);
-						out.append(fileName + ",");
-						if(r.count == null) {
+						out.append(f.getName() + ",");
+						if (r.count == null) {
 							out.append(Utilities.newLine);
 							continue;
 						}
@@ -160,26 +186,27 @@ public class VpcGui extends JFrame {
 					}
 					out.flush();
 					out.close();
-					Utilities.showInfo( "Successfully saved to file.", "");
+					Utilities.showInfo("Successfully saved to file.", "");
 				} catch (IOException e1) {
 					Utilities.showError("IO Error");
 					return;
 				}
-			    
-			    
+
+				Defaults.fileChooserDir = chooser.getCurrentDirectory();
+
 			}
-			
+
 		});
 
-		//menuItem = new JMenuItem("Generate Report");
-		//fileMenu.add(menuItem);
+		// menuItem = new JMenuItem("Generate Report");
+		// fileMenu.add(menuItem);
 
-        //menuItem = new JMenuItem("About");
-		//helpMenu.add(menuItem);
+		// menuItem = new JMenuItem("About");
+		// helpMenu.add(menuItem);
 
 		menuBar.add(fileMenu);
-		//menuBar.add(viewMenu);
-		//menuBar.add(helpMenu);
+		// menuBar.add(viewMenu);
+		// menuBar.add(helpMenu);
 		return menuBar;
 	}
 
@@ -221,42 +248,46 @@ public class VpcGui extends JFrame {
 
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
+			setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+
 			int[] selectedRows = fileNameTable.getSelectedRows();
 
 			if (selectedRows.length == 0)
 				return;
 
 			for (int i : selectedRows) {
-				Object o = model.getValueAt(i, 0);
-				File f = (File) o;
+				File f = ((FileEntry) model.getValueAt(i, 0)).getFile();
 				results.put(f.toString(), vpcExec(f, currentParameters));
 			}
 
 			// Display the data for the first selected row
-			Object o = model.getValueAt(selectedRows[0], 0);
-			File f = (File) o;
+			File f = ((FileEntry) model.getValueAt(selectedRows[0], 0))
+					.getFile();
 			displayResults(results.get(f.toString()));
+			updateUI();
+			setCursor(Cursor.getDefaultCursor());
+
 		}
 
 	}
 
-	
 	private class CountAllButtonHandler implements ActionListener {
 
 		@Override
 		public void actionPerformed(ActionEvent arg0) {
 
 			for (int i = 0; i < model.getRowCount(); i++) {
-				File f = (File) model.getValueAt(i, 0);
-				results.put(f.toString(), vpcExec(f,currentParameters));
+				File f = ((FileEntry) model.getValueAt(i, 0)).getFile();
+				results.put(f.toString(), vpcExec(f, currentParameters));
 			}
 
 			int rowIndex = fileNameTable.getSelectedRow();
 			if (rowIndex == -1)
 				return;
 			// Get the result and set it. Null is OK
-			File f = (File) model.getValueAt(rowIndex, 0);
+			File f = ((FileEntry) model.getValueAt(rowIndex, 0)).getFile();
 			displayResults(results.get(f.toString()));
+			updateUI();
 
 		}
 
@@ -267,100 +298,113 @@ public class VpcGui extends JFrame {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			VPCParams params = new VPCParameterWizard().run(topFrame);
-			if(params == null) {
+			if (params == null) {
 				return;
 			}
 			String response = "";
-			
-			while(response.length() == 0) {
-			//Pop up a dialog asking the user to name the parameters
-			  response = JOptionPane.showInputDialog(null,
-					  "Name this parameter set.",
-					  "Enter a name.",
-					  JOptionPane.QUESTION_MESSAGE);
+
+			while (response.length() == 0) {
+				// Pop up a dialog asking the user to name the parameters
+				response = JOptionPane.showInputDialog(null,
+						"Name this parameter set.", "Enter a name.",
+						JOptionPane.QUESTION_MESSAGE);
 			}
-			
-			
+
 			currentParametersName.setText(response);
 			params.setName(response);
-			
+
 			currentParameters = params;
+
 			updateUI();
-			  
-			
+
 		}
-		
+
 	}
-	
+
 	void updateUI() {
-		//update the params label
-		currentParametersName.setText( currentParameters != null ? currentParameters.name : "None");
-		
-		//allow the count buttons and save param button when parameters are chosen
+		// update the params label
+		currentParametersName
+				.setText(currentParameters != null ? currentParameters.name
+						: "None");
+
+		// allow the count buttons and save param button when parameters are
+		// chosen
 		boolean val = currentParameters != null ? true : false;
-		
+
 		countSelectedButton.setEnabled(val);
-		//countAllButton.setEnabled(val);
+		// countAllButton.setEnabled(val);
 		saveCalibrationButton.setEnabled(val);
-		
+
 		saveResultsToFileMenuItem.setEnabled(getOnScreenResults().size() != 0);
-		
-		
-		
+
 	}
+
 	private class SaveCalibrationButtonHandler implements ActionListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			 JFileChooser jfc = new JFileChooser();
-			 File f = new File(currentParameters.name + ".xml");
-			 jfc.setSelectedFile(f);
-			 int ret = jfc.showSaveDialog(null);
-			 if(ret != JFileChooser.APPROVE_OPTION) {
-				 return;
-			 }
-			 
-			 try {
-				 FileOutputStream fos = new FileOutputStream(jfc.getSelectedFile());
-				currentParameters.storeToXml(fos, "This is a parameter set for VPC");
-				Utilities.showInfo( "Successfully saved parameters to file.", "");
+			JFileChooser jfc = new JFileChooser();
+			jfc.setCurrentDirectory(Defaults.fileChooserDir);
+			File f = new File(currentParameters.name + ".xml");
+			jfc.setSelectedFile(f);
+			int ret = jfc.showSaveDialog(null);
+			if (ret != JFileChooser.APPROVE_OPTION) {
+				return;
+			}
+
+			try {
+				File saveFile = null;
+				if (jfc.getSelectedFile().getPath().endsWith((".xml"))) {
+					saveFile = new File(jfc.getSelectedFile().getPath());
+				} else {
+					saveFile = new File(jfc.getSelectedFile().getPath()
+							+ ".xml");
+				}
+
+				FileOutputStream fos = new FileOutputStream(saveFile);
+				currentParameters.storeToXml(fos,
+						"This is a parameter set for VPC");
+				Utilities
+						.showInfo("Successfully saved parameters to file.", "");
 			} catch (IOException e1) {
 				Utilities.showError("Could not open file for writing.");
 				return;
 			}
+
+			Defaults.fileChooserDir = jfc.getCurrentDirectory();
 		}
 	}
-	
+
 	private class LoadCalibrationButtonHandler implements ActionListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
-			 JFileChooser jfc = new JFileChooser();
-			 
-			 
-			 int ret = jfc.showOpenDialog(null);
-			 if(ret != JFileChooser.APPROVE_OPTION) {
-				 return;
-			 }
-			 
-			 try {
-				 FileInputStream fis = new FileInputStream(jfc.getSelectedFile());
-				 currentParameters = VPCParams.loadFromXml(fis);
-				 
-				 updateUI();
+			JFileChooser jfc = new JFileChooser();
+			jfc.setCurrentDirectory(Defaults.fileChooserDir);
+
+			int ret = jfc.showOpenDialog(null);
+			if (ret != JFileChooser.APPROVE_OPTION) {
+				return;
+			}
+
+			try {
+				FileInputStream fis = new FileInputStream(jfc.getSelectedFile());
+				currentParameters = VPCParams.loadFromXml(fis);
+
+				updateUI();
 			} catch (IOException e1) {
 				Utilities.showError("Could not read file.");
 				return;
 			}
+			Defaults.fileChooserDir = jfc.getCurrentDirectory();
 		}
 	}
-	
-	
+
 	private class FolderButtonHandler implements ActionListener {
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			JFileChooser chooser = new JFileChooser();
-			chooser.setCurrentDirectory(new java.io.File("."));
+			chooser.setCurrentDirectory(Defaults.fileChooserDir);
 			chooser.setDialogTitle("Choose a folder containing viral plaque images.");
 			chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
 			chooser.setAcceptAllFileFilterUsed(false);
@@ -371,6 +415,7 @@ public class VpcGui extends JFrame {
 			} else {
 				System.out.println("No Selection ");
 			}
+			Defaults.fileChooserDir = chooser.getSelectedFile();
 		}
 	}
 
@@ -385,8 +430,7 @@ public class VpcGui extends JFrame {
 			if (rowIndex == -1)
 				return;
 
-			File f = (File) model.getValueAt(rowIndex, 0);
-
+			File f = ((FileEntry) model.getValueAt(rowIndex, 0)).getFile();
 			setImage(f.toString());
 
 			// Get the result and set it. Null is OK
@@ -407,31 +451,36 @@ public class VpcGui extends JFrame {
 	private VPCResult vpcExec(File f, VPCParams params) {
 
 		File tmpFile = null;
-		
-		//There seems to be a problem with passing a file that has a space followed by a
-		//hyphen when calling command line vpc. Copy the file to a temp file if this is the case.
-		if(f.getAbsolutePath().contains(" ")) {
+
+		// There seems to be a problem with passing a file that has a space
+		// followed by a
+		// hyphen when calling command line vpc. Copy the file to a temp file if
+		// this is the case.
+		if (f.getAbsolutePath().contains(" ")) {
 			try {
-				tmpFile = File.createTempFile("tmpImage", f.getName().substring(f.getName().lastIndexOf(".")));
+				tmpFile = File.createTempFile("tmpImage", f.getName()
+						.substring(f.getName().lastIndexOf(".")));
 				Utilities.copyFile(f, tmpFile);
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
-		
+
 		Vector<Vector<Integer>> ret = new Vector<Vector<Integer>>();
 		VPCResult res = new VPCResult();
 
 		Runtime r = Runtime.getRuntime();
-		String imgPath = (tmpFile == null) ? f.getAbsolutePath() : tmpFile.getAbsolutePath();
-		
+		String imgPath = (tmpFile == null) ? f.getAbsolutePath() : tmpFile
+				.getAbsolutePath();
+
 		String launcherPath = this.getClass().getResource("vpc.exe").getPath();
 		try {
-			String cmd = launcherPath + " " + "--img \""
-					+ imgPath + "\" --plateRadius " + params.plateRadius + " --maxPlaqueRadius " + params.maxPlaqueRadius +
-					" --minPlaqueRadius " + params.minPlaqueRadius ;
-			
+			String cmd = launcherPath + " " + "--img \"" + imgPath
+					+ "\" --plateRadius " + params.plateRadius
+					+ " --maxPlaqueRadius " + params.maxPlaqueRadius
+					+ " --minPlaqueRadius " + params.minPlaqueRadius;
+
 			System.out.println(cmd);
 			Process p = r.exec(cmd);
 			BufferedReader stdout = new BufferedReader(new InputStreamReader(
@@ -440,24 +489,24 @@ public class VpcGui extends JFrame {
 			try {
 				p.waitFor();
 			} catch (InterruptedException e) {
-				Utilities.showError("Failed to count plaques for file: " + f + " : " + e);
+				Utilities.showError("Failed to count plaques for file: " + f
+						+ " : " + e);
 			}
-			
-			if(tmpFile != null) {
+
+			if (tmpFile != null) {
 				tmpFile.delete();
 			}
 
-			
 			if (p.exitValue() != 0) {
 				System.out.println("Bad ret value for " + f);
 				System.out.println(p.exitValue());
 				res.errMsg = "Could not process image.";
-
+				updateUI();
 				return res;
 			}
 
 			String s = null;
-			//process the output
+			// process the output
 			while ((s = stdout.readLine()) != null) {
 				String[] tokens = s.split(", ");
 				if (tokens == null || tokens.length == 0
@@ -474,9 +523,9 @@ public class VpcGui extends JFrame {
 		} catch (IOException e) {
 			Utilities.showError("Internal error: " + e.toString());
 		}
-		
-		
+
 		res.count = ret;
+
 		return res;
 	}
 
@@ -491,14 +540,17 @@ public class VpcGui extends JFrame {
 		countAllButton.addActionListener(new CountAllButtonHandler());
 
 		// New parameters action
-		newCalibrationButton.addActionListener(new NewCalibrationButtonHandler());
-		
+		newCalibrationButton
+				.addActionListener(new NewCalibrationButtonHandler());
+
 		// Save params
-		saveCalibrationButton.addActionListener(new SaveCalibrationButtonHandler());
-		
-		//Load params
-		loadCalibrationButton.addActionListener(new LoadCalibrationButtonHandler());
-	
+		saveCalibrationButton
+				.addActionListener(new SaveCalibrationButtonHandler());
+
+		// Load params
+		loadCalibrationButton
+				.addActionListener(new LoadCalibrationButtonHandler());
+
 		// Create table model columns
 		model.addColumn("File name");
 		fileNameTable.getSelectionModel().addListSelectionListener(
@@ -518,7 +570,7 @@ public class VpcGui extends JFrame {
 		File folder = new File(currentFolderTextField.getText());
 		File[] listOfFiles = folder.listFiles();
 		for (File f : listOfFiles) {
-			model.addRow(new Object[] { f });
+			model.addRow(new Object[] { new FileEntry(f) });
 		}
 
 	}
@@ -530,7 +582,8 @@ public class VpcGui extends JFrame {
 			ByteArrayOutputStream buf = new ByteArrayOutputStream();
 			PrintStream sw = new PrintStream(buf);
 			sw.append("Internal error: " + e + Utilities.newLine);
-			sw.append("   File: " + e.getStackTrace()[0].getFileName() + Utilities.newLine);
+			sw.append("   File: " + e.getStackTrace()[0].getFileName()
+					+ Utilities.newLine);
 			sw.append("   Line: " + e.getStackTrace()[0].getLineNumber());
 			sw.flush();
 			Utilities.showError(buf.toString());
@@ -541,7 +594,7 @@ public class VpcGui extends JFrame {
 	private void build() {
 
 		this.topFrame = this;
-		
+
 		this.addComponentListener(new java.awt.event.ComponentAdapter() {
 			@Override
 			public void componentResized(ComponentEvent e) {
@@ -581,7 +634,9 @@ public class VpcGui extends JFrame {
 				.withOwnRowWidth()
 				.left(newCalibrationButton, loadCalibrationButton,
 						saveCalibrationButton);
-		l.row().left().add(Utilities.standardLabel("Currently Loaded Parameters:")).add(currentParametersName);
+		l.row().left()
+				.add(Utilities.standardLabel("Currently Loaded Parameters:"))
+				.add(currentParametersName);
 
 		// Build the Images panel
 		ImagesPanel.setLayout(new BorderLayout());
@@ -604,9 +659,9 @@ public class VpcGui extends JFrame {
 			}
 		});
 		l.row().left().withOwnRowWidth().add(slider);
-		imageScroller = new JScrollPane(imagePanel, 
-				                        JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, 
-                                        JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
+		imageScroller = new JScrollPane(imagePanel,
+				JScrollPane.VERTICAL_SCROLLBAR_ALWAYS,
+				JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
 		imageScroller.setPreferredSize(new Dimension(610, 400));
 		imageScroller.setWheelScrollingEnabled(false);
 		l.row().left().withOwnRowWidth().add(imageScroller);
@@ -631,17 +686,22 @@ public class VpcGui extends JFrame {
 	}
 
 	public HashMap<String, VPCResult> getOnScreenResults() {
+		System.out.println(results.keySet());
+
 		HashMap<String, VPCResult> ret = new HashMap<String, VPCResult>();
 		for (int i = 0; i < model.getRowCount(); i++) {
-			File f = (File) model.getValueAt(i, 0);
-			if(results.containsKey(f.toString())) {
+
+			File f = ((FileEntry) model.getValueAt(i, 0)).getFile();
+			System.out.println(f.toString());
+			if (results.containsKey(f.toString())) {
 				ret.put(f.toString(), results.get(f.toString()));
 			}
 		}
 
+		System.out.println(ret.size() + " is onscreen results count");
 		return ret;
 	}
-	
+
 	public void displayResults(VPCResult res) {
 
 		for (int i = 0; i < resultsLabels.size(); i++)
@@ -709,7 +769,5 @@ public class VpcGui extends JFrame {
 		setVisible(true);
 
 	}
-
-
 
 }
