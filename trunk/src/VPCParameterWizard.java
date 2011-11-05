@@ -114,8 +114,9 @@ public class VPCParameterWizard {
 		chooseButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
+				
 				JFileChooser chooser = new JFileChooser();
-				chooser.setCurrentDirectory(new java.io.File("."));
+				chooser.setCurrentDirectory(Defaults.fileChooserDir);
 				chooser.setDialogTitle("Choose a sample viral plaque image.");
 				if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
 					selectedFileTextField.setText(chooser.getSelectedFile()
@@ -125,6 +126,7 @@ public class VPCParameterWizard {
 					if(tuningImage != null) {
 						tuningImageFile = new File(selectedFileTextField.getText());
 						slider.setValue(0);
+						Defaults.fileChooserDir = chooser.getCurrentDirectory();
 					}
 					
 				} else { 
@@ -375,7 +377,7 @@ public class VPCParameterWizard {
 	        double crossHairSizeScaled = this.crossHairSize * scale;
 	        //Draw the crosshair
 	        //draw the x axis
-	        g.setColor(Color.WHITE);
+	        g.setColor(Color.BLUE);
 	        g.drawLine((int)(crossHairLocationX - Math.round(crossHairSizeScaled)),
 	        		   (int)(crossHairLocationY),
 	        		   (int)(crossHairLocationX + Math.round(crossHairSizeScaled)),
