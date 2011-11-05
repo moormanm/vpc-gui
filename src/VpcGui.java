@@ -308,6 +308,9 @@ public class VpcGui extends JFrame {
 				response = JOptionPane.showInputDialog(null,
 						"Name this parameter set.", "Enter a name.",
 						JOptionPane.QUESTION_MESSAGE);
+				if(response == null) {
+					return;
+				}
 			}
 
 			currentParametersName.setText(response);

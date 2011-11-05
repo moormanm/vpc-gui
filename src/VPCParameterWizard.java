@@ -240,7 +240,7 @@ public class VPCParameterWizard {
 		dlg.setSize(800,600);
 		JPanel content = new JPanel(new BorderLayout());
 		final PlateSizeImagePanel imgPanel = new PlateSizeImagePanel();
-		final JSlider slider = new JSlider(0,5);
+		final JSlider slider = new JSlider(0,10);
 		slider.setValue(0);
 		slider.setFocusable(false);
 		slider.addChangeListener(new ChangeListener() {
@@ -425,7 +425,7 @@ public class VPCParameterWizard {
 			        	keyMult++;
 			        	break;
 			        case KeyEvent.VK_SUBTRACT :
-			        	setCrossHairSize(Math.max(0, sz - keyMult));
+			        	setCrossHairSize(Math.max(1, sz - keyMult));
 			        	keyMult++;
 			        	break;
 			     }
