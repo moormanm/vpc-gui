@@ -178,9 +178,9 @@ Render a morphological open [CITE] operation on image B using a 2x2  rectangular
 
 \item
 Merge images B and C into a new image A using a binary image merge of the form 
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
 A = ~B & C
-\end{verbatim}
+\end{Verbatim}
 \begin{figure}[H]
 \centering
 \includegraphics[width=.25\textwidth]{countMerged.jpg}
@@ -190,7 +190,7 @@ A = ~B & C
 
 \item
 Obtain the hierarchy of contours in A. Let the total number of contours be determined by the following pseudocode:
-\begin{verbatim}
+\begin{Verbatim}[samepage=true]
 
 minP = min plaque area
 maxP = max plaque area
@@ -203,7 +203,7 @@ for contour C in outerContours:
 
   totalContours +=
      max(1, innerContourCount) 
-\end{verbatim}
+\end{Verbatim}
 
 \end{enumerate}
 The plaque counting method attempts to find a balance between finding feint and sparse plaques VS. properly dividing and detecting dark, prominent plaques. Feint  plaques are typically discovered through analysis of the dilated image (Image C). Dilation effectively joins plaque clusters and forms a cohesive, filled areas. The erosion rendition of the well is focused on discerning prominent plaque structures.  Without an erosion step, a cluster of viral plaque structures are at risk of being inaccurately tallied as a single plaque. Combining the dilated and eroded versions of a well image takes advantages of both morphological transforma ions. Small, feint plaques are emphasized and large  clustered plaques are separated. Both transformations scale with the user supplied parameters maxPlaqueRadius and minPlaqueRadius.
@@ -271,6 +271,15 @@ Total error for study three: $.20$
 
 \section{Discussion}
 Experimental data shows that the proposed method is capable of counting entire plates of samples with a recorded accuracy of up to 90 percent.  In some cases, this accuracy is significantly lessened, with a minimum accuracy found to be near 80 percent of truth data in testing. The primary contributors to poor accuracy in these cases is the signal to noise ratio in the images of viral plaque and large discrepencies between the size of plaque structures. Aspects of the innoculation experiments themselves can sometimes produce this noise, though much of it seems to be produced at image acquisition. 
+
+In its current state, the overall accuracy of the procedure may be suitable for applications where average error levels of up to 30 percent are tolerated.     Further investigation is needed to improve average error levels. It is speculated that methods for improving the signal to noise ratio at image acquisition stage could vastly improve overall accuracy. Use of a high resolution overhead camera and reflection reduction system such as in [CITE] could help in this area. An overhead camera type apparatus might also prove very practical, as it could used to capture images in real time and improve overall work flow.`
+
+ 
+\appendix
+
+\section{Acknowledgements}
+Thanks to the Southern Research Institute of Frederick Maryland for providing example plaque images and truth data.
+
 
 \end{document}
 
