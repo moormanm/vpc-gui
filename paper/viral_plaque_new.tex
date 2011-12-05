@@ -4,6 +4,7 @@
 \usepackage{expdlist}
 \usepackage{fancyvrb}
 \usepackage{float}
+
 \bibliographystyle{IEEEtran}
 
 
@@ -17,12 +18,12 @@
 \setlength{\parskip}{1ex}
 \begin{document}
 
-\title{Image Processing Technique for Automated Viral Plaque Counting}
+\title{Automatic Viral Plaque Counting Using Image  Analysis Techniques}
 \author{Michael Moorman, Aijuan Dong \\
 Hood College}
 \maketitle
 \section{Abstract}
-The viral plaque assay is an important procedure in virology. One step of this procedure includes the manual counting of viral plaques with the naked eye.  This is often a time consuming and laborious process. A method is presented for automating mammalian type viral plaque counting using image processing techniques and the OpenCV Computer Vision library. The method consumes an image of an entire plate of viral plaque samples and outputs individual counts of each sample in the plate. The image is captured using a commercial flat bed scanner. Experimental results show that the method is up to 90 percent accurate in comparison to trained human counts. The program produces results for a single image in about one second.  Compared to commercial colony counter systems, the proposed method is extremely economical; the only hardware required by the method is a personal computer and a flatbed scanner.  Finally, an open source implementation of the program is provided, which includes an optional graphical user interface. 
+The manual counting of viral plaques is a tedious and laborious process. In this paper, an efficient and economical method is proposed for automating viral plaque counting via image segmentation and various morphological operations. The method first segments the whole image into individual plate images. Then, it converts each plate image into binary image and creates a new image by merging the dilated binary image and the complement image of the eroded binary image. At last, the contour hierarchy of the merged image is obtained and the plaque count is calculated by evaluating each outer contour count and its inner contour counts. Experiment results showed that the counting accuracy for the proposed method is up to 90 percent and the average processing time for a single image is about one second. An open source implementation with optional graphical user interface is available for public use.
 
 
 \section{Introduction}
@@ -40,17 +41,31 @@ A common example of the procedure begins by preparing several dilutions of a vir
 The last stage of this procedure can be particularly laborious. Counts of the number of plaque formations on each well are manually tallied by hand. It is also a subjective exercise, with different technicians frequently reporting different counts for a given sample.
 
 
-Automated counting of viral plaques via image processing techniques  has been proposed and investigated many times before, and there are several commercial products on the market that manufacture colony counting systems. There is a lucrative market for automated colony counting, and several companies manufacture colony counting systems. These systems can cost thousands of dollars and are often both closed source and not economically feasible. Other studies have approached automated viral plaque counting before and have tried a number of different  approaches. Some of these include use of a Watershed Transform ~\cite{watershed}, Distance transform ~\cite{distanceTransform},  Hough transform ~\cite{houghTransform}, and parameter identification with fuzzy logic ~\cite{parameterIdentification}. Of these works, However,  they did not feature the ability to process an entire plate of samples. 
+Automated counting of viral plaques via image processing techniques  has been proposed and investigated many times before, and there are several commercial products on the market that manufacture colony counting systems. There is a lucrative market for automated colony counting, and several companies manufacture colony counting systems. These systems can cost thousands of dollars and are often both closed source and not economically feasible. Some examples include the Revolutionary Science IncuCount Automatic Colony Counter priced at \$$7,845$ ~\cite{labSafetySupply}, the UVP Imaging Sys EC3 410 priced at \$$31,179$ \cite{labPlanet}, and the Flash and Grow Automatic Colony Counter priced at \$$9,980$ \cite{coleParmer}. 
 
-At present time,  there is not a low cost and  accurate colony counting system available that enjoys wide spread adoption and that is able to accommodate an entire plate of samples. This is a primary motivation for the work presented here. In addition, the performance of some of these works was poor. In the case of ~\cite{watershed}, the system consumed ten seconds of wall clock computational time to analyze a single viral plaque plate. 
+ Other studies have approached automated viral plaque counting before and have tried a number of different  approaches. In ~\cite{watershed}, a watershed transform was used to analyze a single dish image acquired by an overhead camera. This system was capable of counting to within $93$\% of
+manual counting, however mammalian type plaque structures were not tested, and the implementation required up to ten seconds to process a single plate. A similar approach was used in ~\cite{distanceTransform}, where a distance trasform was used instead of watershed. It includes a software suite that was capable of counting an entire plate of samples to within $95$\% of human counts, but the process requires users to manually identify each area of interest on the plate using a graphical user interface.  Another approach used in ~\cite{houghTransform} used images of stained culture flasks and a Hough transform technique that produced counts falling well within the
+distribution of corresponding manual counts, but it required a special image acquisition apparatus and did not allow for batch processing of an entire plate. 
+
+At present time,  there is not a low cost and  accurate colony counting system available that enjoys wide spread adoption and that is able to accommodate an entire plate of samples. This is a primary motivation for the work presented here. In addition, the performance of some of these works was poor. 
 
 Accurately counting plaques in these types of images presents several challenges. Perhaps the most difficult challenge that any solution must address is how to deal with the noise in the image.  How does one go about discerning the difference between viral plaques and the frequent noisy particles in the agar of the plates?  This is particularly problematic when dealing with small plaques, as there signal to noise ratio is very small in that case.  
 
 OpenCV is an open source computer vision library available from http://sourceforge.net/projects/opencvlibrary. The library is written in C and C++ and runs under Linux, Windows, and Mac OS X. It provides an application interface (API) that this study uses to implement the proposed method. 
 
 
-\section{Methodology}
+The rest of the paper is organized as follows. In Section \ref{sec:methodology}, a technical walk through of the counting method is presented. Experiment results are shown in Section \ref{sec:experiments} and the paper concludes in Sections \ref{sec:discussion} and \ref{sec:conclusion}.
+
+
+\section{Methodology}\label{sec:methodology}
 The proposed method is implemented as a computer program written in C++ and uses the  OpenCV ~\cite{openCV} image processing API to perform image analysis. 
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=.45\textwidth]{flowchart.png}
+\caption{Overview of technical approach}
+\label{fig:flowchart}
+\end{figure}
 
 \subsection{User Supplied Parameters}
 The user supplies the program with an image of a plate of viral plaques, and also specifies three parameters.
@@ -212,7 +227,7 @@ The plaque counting method attempts to find a balance between finding feint and 
 
 The final step of the per well counting routine considers the max and minPlaqueRadius parameters when tallying total plaque counts. 
 
-\section{Experiments}
+\section{Experiments}\label{sec:experiments}
 
 For these experiments, viral plaque images are logically grouped as a study. In a given study, plates are prepared with similar parameter and all of the viral plaque plates in a study have been allowed to incubate for about the same amount of time. Each study consists of plates that use the same or very similar innoculation techniques. They also use similar agar, tissue mediums, and viruses for experiments. This organization scheme allows for a pairing of one set of program parameters to be attached to all the images for a given study. Likewise, parameters are configured for the program on a per study 
 basis.
@@ -227,14 +242,14 @@ In the first study, African Green Monkey Kidney Cells  Cell strain Vero E6 were 
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=.4\textwidth]{Study1Results.png}
+\includegraphics[width=.5\textwidth]{Study1Results.png}
 \caption{Study one results}
 \label{fig:study1Results}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=.4\textwidth]{Study1ResultsCont.png}
+\includegraphics[width=.5\textwidth]{Study1ResultsCont.png}
 \caption{Study one results cont.}
 \label{fig:study1ResultsCont}
 \end{figure}
@@ -247,14 +262,14 @@ In the second study, African Green Monkey Kidney Cells  Cell strain Vero E6 were
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=.4\textwidth]{Study2Results.png}
+\includegraphics[width=.5\textwidth]{Study2Results.png}
 \caption{Study 2 results}
 \label{fig:study2Results}
 \end{figure}
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=.4\textwidth]{Study2ResultsCont.png}
+\includegraphics[width=.5\textwidth]{Study2ResultsCont.png}
 \caption{Study 2 results cont.}
 \label{fig:study2ResultsCont}
 \end{figure}
@@ -264,23 +279,25 @@ Total error for study two : $.20$
 In the third study, African Green Monkey Kidney Cells  Cell strain Vero E6 were again infected with Monkey Pox Zaire strain. Three sample images were captured and sent to the program for processing. Each plate contained 18 wells, and a total of 52 data points were compared with corresponding truth data points.
 \begin{figure}[H]
 \centering
-\includegraphics[width=.4\textwidth]{Study3Results.png}
+\includegraphics[width=.5\textwidth]{Study3Results.png}
 \caption{Study three results}
 \label{fig:study3Results}
 \end{figure}
 Total error for study three: $.20$ 
 
 
-\section{Discussion}
+\section{Discussion}\label{sec:discussion}
 Experimental data shows that the proposed method automatically counts an entire viral plaque plate with an accuracy range of 70 to 90 percent. It was observed that the accuracy of the method roughly correlates to the quality of the image acquired by the scanner and the clarity of the structures in the actual samples. Highly errant counts were tallied when the scanned image contained objects such as reflections or attributes such as low contrast. High error levels were also observed when the actual samples were smudged or otherwise damaged due to human error in preparation. In its current state, the overall accuracy of the procedure may be suitable for applications where average error levels of up to 30 percent can be tolerated. However, further investigation is needed to improve average error levels. It is speculated that methods for improving the signal to noise ratio at image acquisition stage could vastly improve overall accuracy. Use of a high resolution overhead camera and reflection reduction system such as in ~\cite{watershed} could help in this area. An overhead camera type apparatus might also prove very practical, as it could used to capture images in real time and improve overall work flow. Ultimately, a trained eye is still required to determine if a given sample plate is a candidate for automated counting; some samples are simply too damaged or noisy for the proposed method to process and produce a counts of reasonable accuracy.  
 
 
+\section{Conclusion}\label{sec:conclusion}
+
 
 \bibliography{IEEEabrv,mybibfile}
-\appendix
 
-\section{Acknowledgements}
-Thanks to the Southern Research Institute of Frederick Maryland for providing example plaque images and truth data.
+
+\section*{Acknowledgements}
+Thanks to the Southern Research Institute of Frederick Maryland and Mr. Michael Inskeep for providing example plaque images and truth data.
 
 
 \end{document}
