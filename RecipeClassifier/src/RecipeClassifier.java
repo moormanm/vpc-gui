@@ -7,6 +7,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -22,66 +24,71 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableModel;
 
 import ch.rakudave.suggest.JSuggestField;
+
 public class RecipeClassifier extends JFrame {
 
-	
 	private Vector<String> ingredients = getIngredients();
+
 	private static Vector<String> getIngredients() {
-		InputStream is = RecipeClassifier.class.getResourceAsStream(
-        "/ingredients");
+		InputStream is = RecipeClassifier.class
+				.getResourceAsStream("/ingredients");
 		try {
-		  BufferedReader in = new BufferedReader(new InputStreamReader(is));
-          Vector<String> ret = new Vector<String>();
-          String line;
-	      while((line = in.readLine()) != null) { 
-	        	ret.add(line.toLowerCase());	        	
-	      }
-	      return ret;
+			BufferedReader in = new BufferedReader(new InputStreamReader(is));
+			Vector<String> ret = new Vector<String>();
+			String line;
+			while ((line = in.readLine()) != null) {
+				ret.add(line.toLowerCase());
+			}
+			return ret;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
-	}	
-	
+	}
+
 	static public class Recipe {
 		String name;
 		HashSet<String> ingredients = new HashSet<String>();
 	}
+
 	private Vector<Recipe> recipes = getRecipes();
+
 	private static Vector<Recipe> getRecipes() {
-		InputStream is = RecipeClassifier.class.getResourceAsStream(
-        "/recipes");
+		InputStream is = RecipeClassifier.class.getResourceAsStream("/recipes");
 		try {
-		  BufferedReader in = new BufferedReader(new InputStreamReader(is));
-          Vector<Recipe> ret = new Vector<Recipe>();
-          String line;
-          while((line = in.readLine()) != null) {
-	    	    Recipe r = new Recipe();
-	        	String[] fields = line.split("\\|");
-	        	r.name = fields[0];
-	        	for(int i=1; i< fields.length; i++) {
-	        		r.ingredients.add(fields[i].toLowerCase());
-	        	}
-	        	ret.add(r);
-	        	
-	      }
-	      return ret;
+			BufferedReader in = new BufferedReader(new InputStreamReader(is));
+			Vector<Recipe> ret = new Vector<Recipe>();
+			String line;
+			while ((line = in.readLine()) != null) {
+				Recipe r = new Recipe();
+				String[] fields = line.split("\\|");
+				r.name = fields[0];
+				for (int i = 1; i < fields.length; i++) {
+					r.ingredients.add(fields[i].toLowerCase());
+				}
+				ret.add(r);
+
+			}
+			return ret;
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return null;
 	}
-	
+
 	/**
 	 * @param args
 	 */
 	JSuggestField ingredEntry;
+
 	class MyTableModel extends DefaultTableModel {
 		public MyTableModel(Object[][] data, Object[] names) {
 			super(data, names);
@@ -91,93 +98,103 @@ public class RecipeClassifier extends JFrame {
 			return false;
 		}
 	}
-	MyTableModel leftTableModel = new MyTableModel( null, new String[]{"Ingredients"});
-	MyTableModel rightTableModel = new MyTableModel( null, new String[]{"Ingredients"});
-	
-	HashSet<String> ingredientHash = new HashSet<String>(ingredients); 
 
+	MyTableModel leftTableModel = new MyTableModel(null,
+			new String[] { "Ingredients" });
+	MyTableModel rightBottomTableModel = new MyTableModel(null,
+			new String[] { "Ingredients" });
+	MyTableModel rightTopTableModel = new MyTableModel(null,
+			new String[] { "Like These Recipes" });
+	HashSet<String> ingredientHash = new HashSet<String>(ingredients);
+	HashMap<String, Recipe> recipeHash = new HashMap<String, Recipe>();
+	{ 
+		for(Recipe r: recipes) {
+			recipeHash.put(r.name,r);
+		}
+	}
 
 	JTable leftTable = new JTable(leftTableModel);
-	JTable rightTable = new JTable(rightTableModel);
+	JTable rightTopTable = new JTable(rightTopTableModel);
+	JTable rightBottomTable = new JTable(rightBottomTableModel);
 	JButton addButton = new JButton("Add");
 	JButton classifyButton = new JButton("Classify");
 	JButton removeButton = new JButton("Remove");
 	JButton resetButton = new JButton("Reset");
 	JLabel resultLabel = new JLabel("Result:");
+
 	public RecipeClassifier() {
-		
-		
-		GridLayout myLayout = new GridLayout(1,2);
+
+		GridLayout myLayout = new GridLayout(1, 2);
 		myLayout.setHgap(40);
 		myLayout.setVgap(20);
-		
+
 		JPanel myPanel = new JPanel(myLayout);
-		
+
 		ingredEntry = new JSuggestField(this, ingredients);
-		ingredEntry.setPreferredSize(new Dimension(300,25));
-		
+		ingredEntry.setPreferredSize(new Dimension(300, 25));
+
 		leftTable.setFillsViewportHeight(true);
-		rightTable.setFillsViewportHeight(true);
+		rightTopTable.setFillsViewportHeight(true);
+		rightBottomTable.setFillsViewportHeight(true);
 		JPanel leftArea = new JPanel();
 		JPanel rightArea = new JPanel();
-		
+
 		leftArea.setLayout(new BorderLayout());
 		rightArea.setLayout(new BorderLayout());
-		
+
 		JPanel entryArea = new JPanel();
 		entryArea.add(ingredEntry);
 		entryArea.add(addButton);
-		
-		
+
 		leftArea.add(entryArea, BorderLayout.NORTH);
-		
+
 		JPanel controlsAndTableArea = new JPanel(new BorderLayout());
 		JPanel controlsArea = new JPanel();
 		controlsArea.add(removeButton);
 		controlsArea.add(resetButton);
-		
-		
+
 		controlsAndTableArea.add(controlsArea, BorderLayout.NORTH);
-		controlsAndTableArea.add(new JScrollPane(leftTable), BorderLayout.CENTER);
+		controlsAndTableArea.add(new JScrollPane(leftTable),
+				BorderLayout.CENTER);
 		leftArea.add(controlsAndTableArea, BorderLayout.CENTER);
-		
+
 		JPanel classifyArea = new JPanel();
 		classifyArea.add(classifyButton);
-		
-		
+
 		rightArea.add(classifyArea, BorderLayout.NORTH);
-		
-		JPanel resultArea = new JPanel();
+
 		JPanel resultAndTableArea = new JPanel(new BorderLayout());
-		resultArea.add(resultLabel);
-		resultAndTableArea.add(resultArea, BorderLayout.NORTH);
-		resultAndTableArea.add(new JScrollPane(rightTable), BorderLayout.CENTER);
+		resultAndTableArea.add(new JScrollPane(rightTopTable),
+				BorderLayout.NORTH);
+		resultAndTableArea.add(new JScrollPane(rightBottomTable),
+				BorderLayout.CENTER);
 
 		rightArea.add(resultAndTableArea);
-		
-		
-		myPanel.add(leftArea); myPanel.add(rightArea);
-		
+
+		myPanel.add(leftArea);
+		myPanel.add(rightArea);
+
 		JPanel topPanel = new JPanel(new BorderLayout());
 		topPanel.add(myPanel, BorderLayout.CENTER);
-		
-		add(topPanel);
-		
-		setPreferredSize(new Dimension(800,600));
-		
 
-		//Set up action handlers
+		add(topPanel);
+
+		setPreferredSize(new Dimension(800, 600));
+
+		// Set up action handlers
 		addButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-				
-				if( ! ingredientHash.contains( ingredEntry.getText())) {
-					JOptionPane.showMessageDialog(null, "Use a valid ingredient", "Error", JOptionPane.ERROR_MESSAGE);
+
+				if (!ingredientHash.contains(ingredEntry.getText())) {
+					JOptionPane.showMessageDialog(null,
+							"Use a valid ingredient", "Error",
+							JOptionPane.ERROR_MESSAGE);
 					return;
 				}
-				
+
 				Object[] data = new Object[1];
-				data[0] = ingredEntry.getText() ;
+				data[0] = ingredEntry.getText();
 				leftTableModel.insertRow(leftTableModel.getRowCount(), data);
 				ingredEntry.setText("");
 			}
@@ -188,124 +205,210 @@ public class RecipeClassifier extends JFrame {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				ingredEntry.setText("");
-				while(leftTableModel.getRowCount() > 0) {
-				  leftTableModel.removeRow(0);
+				while (leftTableModel.getRowCount() > 0) {
+					leftTableModel.removeRow(0);
 				}
-				while(rightTableModel.getRowCount() > 0) {
-					  rightTableModel.removeRow(0);
+				while (rightBottomTableModel.getRowCount() > 0) {
+					rightBottomTableModel.removeRow(0);
+				}
+				while (rightTopTableModel.getRowCount() > 0) {
+					rightTopTableModel.removeRow(0);
 				}
 				resultLabel.setText("Result:");
 			}
 		});
-		
+
 		removeButton.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				int selRow = leftTable.getSelectedRow();
 				System.out.println(selRow);
-				if(selRow == -1) return;
+				if (selRow == -1)
+					return;
 				leftTableModel.removeRow(selRow);
-			}
+			} 
 		});
-		
+
 		classifyButton.addActionListener(new ActionListener() {
 
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-			  if(leftTableModel.getRowCount() == 0) return;
+				if (leftTableModel.getRowCount() == 0)
+					return;
 
-			  //Clear the results area
-			  while(rightTableModel.getRowCount() > 0) {
-					  rightTableModel.removeRow(0);
-			  }
-			  resultLabel.setText("Result:");
-			  
-			  //Make a hashset using the left table data. This is A.
-			  HashSet<String> a = new HashSet<String>();
-			  int rowCount = leftTableModel.getRowCount();
-			  
-			  for(int i=0; i < rowCount; i++) {
-				  a.add((String)leftTableModel.getValueAt(i,0));
-			  }
-			  
-			  
-			  //For each recipe in our database, compare
-			  double bestScore = 0;
-			  Recipe bestMatch = null;
-			  for(Recipe r: recipes) {
-				  double tmp = calculateLikeness(a, r.ingredients); 
-				  if(tmp > bestScore) {
-					  bestScore = tmp;
-					  bestMatch = r;
-				  }
-			  }
-			  
-			  if(bestMatch == null) {
-				  JOptionPane.showMessageDialog(null, "Could not find anything like this", "Error", JOptionPane.ERROR_MESSAGE);
-				  return;
-			  }
-			  
-			  resultLabel.setText("Result: " + bestMatch.name);
-			  for(String s : bestMatch.ingredients) {
-    				Object[] data = new Object[1];
-					data[0] = s;
-					rightTableModel.insertRow(rightTableModel.getRowCount(), data);
-	    		
-			  }
-			  
-			  
-				
+				// Clear the results area
+				while (rightBottomTableModel.getRowCount() > 0) {
+					rightBottomTableModel.removeRow(0);
+				}
+				while (rightTopTableModel.getRowCount() > 0) {
+					rightTopTableModel.removeRow(0);
+				}
+
+				// Make a hashset using the left table data. This is A.
+				HashSet<String> a = new HashSet<String>();
+				int rowCount = leftTableModel.getRowCount();
+
+				for (int i = 0; i < rowCount; i++) {
+					a.add((String) leftTableModel.getValueAt(i, 0));
+				}
+
+				class Tuple implements Comparable<Tuple> {
+					final Recipe r;
+					final Double score;
+
+					Tuple(Recipe r, Double score) {
+						this.r = r;
+						this.score = score;
+					}
+
+					@Override
+					public int compareTo(Tuple other) {
+						return score.compareTo(other.score);
+					}
+				}
+
+				LinkedList<Tuple> results = new LinkedList<Tuple>();
+
+				// Run through and calculate the likeness for each recipe
+				for (Recipe r : recipes) {
+					Tuple t = new Tuple(r, calculateLikeness(a, r.ingredients));
+					results.add(t);
+				}
+
+				if (results.size() == 0) {
+					JOptionPane.showMessageDialog(null,
+							"Could not find anything like this", "Error",
+							JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+
+				//Sort descending
+				Collections.sort(results);
+				Collections.reverse(results);
+
+				for (Tuple t : results) {
+					if (t.score == 0)
+						continue;
+					Object[] data = new Object[1];
+					data[0] = t.r.name;
+					rightTopTableModel.insertRow(
+							rightTopTableModel.getRowCount(), data);
+				}
 			}
-			
 		});
+
+		rightTopTable.getSelectionModel().addListSelectionListener( new ListSelectionListener() {
+
+			@Override
+			public void valueChanged(ListSelectionEvent e) {
+				if (e.getValueIsAdjusting()) {
+					return;
+				}
+				while (rightBottomTableModel.getRowCount() > 0) {
+					rightBottomTableModel.removeRow(0);
+				}
+				int rowIndex = rightTopTable.getSelectedRow(); if (rowIndex
+				 == -1) return;
+				String selectedRecipe = (String)rightTopTableModel.getValueAt(rowIndex,0);
+				
+				Recipe r = recipeHash.get(selectedRecipe);
+				for(String ing : r.ingredients) {
+					Object[] data = new Object[1];
+					data[0] = ing;
+					rightBottomTableModel.insertRow(rightBottomTableModel.getRowCount(), data);
+				}
+				
+
+			}
+		});
+
 	}
-	
-	
+
 	public static void createAndShowGUI() {
 		System.out.println("ASDF");
-        //Create and set up the window.
-        JFrame frame = new RecipeClassifier();
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
- 
-        
-        //Display the window.
-        frame.pack();
-        frame.setVisible(true);
+		// Create and set up the window.
+		JFrame frame = new RecipeClassifier();
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		
+		// Display the window.
+		frame.pack();
+		frame.setVisible(true);
+
 	}
-	
+
 	public static void main(String[] args) {
-		
+
 		// TODO Auto-generated method stub
-        //Schedule a job for the event-dispatching thread:
-        //creating and showing this application's GUI.
-        javax.swing.SwingUtilities.invokeLater(new Runnable() {
-            public void run() {
-                createAndShowGUI();
-            }
-        });
-        
+		// Schedule a job for the event-dispatching thread:
+		// creating and showing this application's GUI.
+		javax.swing.SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				createAndShowGUI();
+			}
+		});
+
 	}
 	
-	
+	HashMap<String,Integer> ingrGram = new HashMap<String,Integer>();
+	{
+	  for(Recipe r : recipes) {
+		  for(String ing : r.ingredients) {
+			  if (ingrGram.containsKey(ing) ) {
+				  Integer val = ingrGram.get(ing);
+				  val++;
+				  ingrGram.put(ing,val);
+			  }
+			  else {
+				  ingrGram.put(ing, 1);
+			  }
+		  }
+	  }
+	  
+	  class Tuple implements Comparable<Tuple>{
+		final String ing;
+		final Integer count;
+		Tuple(String ing, Integer count) {
+			this.ing = ing; this.count = count;
+		}
+		@Override
+		public int compareTo(Tuple arg0) {
+			// TODO Auto-generated method stub
+			return count.compareTo(arg0.count);
+		}
+	  }
+	  
+	  
+	  LinkedList<Tuple> list = new LinkedList<Tuple>();
+	  for(String s : ingrGram.keySet()) {
+		  Tuple t = new Tuple(s, ingrGram.get(s));
+		  list.add(t);
+	  }
+	  Collections.sort(list);
+	  Collections.reverse(list);
+	  
+	  for(Tuple t : list) {
+		  System.out.println(t.ing + " : " + t.count);	  
+	  }
+	 
+	  
+ 		
+	}
+
 	public double calculateLikeness(HashSet<String> a, HashSet<String> b) {
-		int c = 0;
+		double c = 0;
 		System.out.println(b);
-		//Count the commonalities of A and B
-	    for(String aItem : a) {
-		   if(b.contains(aItem)) {
-			   c++;
-		   }
-	    }
-	    
-	    //Divide the number of commonalities by the number of items in b
-	    double score = (double)c ;
-	    
-	    return score;
-	    
+		// Count the commonalities of A and B
+		for (String aItem : a) {
+			if (b.contains(aItem)) {
+				//Get the item score..
+				double score = 1.0 / ingrGram.get(aItem);
+				c += score;
+			}
+		}
+
+		return c;
+
 	}
-		
 
 }
