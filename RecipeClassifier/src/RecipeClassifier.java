@@ -32,9 +32,9 @@ import javax.swing.table.DefaultTableModel;
 import ch.rakudave.suggest.JSuggestField;
 
 public class RecipeClassifier extends JFrame {
-
-	private Vector<String> ingredients = getIngredients();
-
+	private static HashSet<String> ingredientHash = new HashSet<String>();
+	private static HashMap<String, Recipe> recipeHash = new HashMap<String, Recipe>();
+	private static Vector<String> ingredients = getIngredients();
 	private static Vector<String> getIngredients() {
 		InputStream is = RecipeClassifier.class
 				.getResourceAsStream("/ingredients");
@@ -43,7 +43,11 @@ public class RecipeClassifier extends JFrame {
 			Vector<String> ret = new Vector<String>();
 			String line;
 			while ((line = in.readLine()) != null) {
-				ret.add(line.toLowerCase());
+				if(!ingredientHash.contains(line.toLowerCase())) {
+					ret.add(line.toLowerCase());
+					ingredientHash.add(line.toLowerCase());
+				}
+				
 			}
 			return ret;
 		} catch (IOException e) {
@@ -69,12 +73,15 @@ public class RecipeClassifier extends JFrame {
 			while ((line = in.readLine()) != null) {
 				Recipe r = new Recipe();
 				String[] fields = line.split("\\|");
+
 				r.name = fields[0];
 				for (int i = 1; i < fields.length; i++) {
 					r.ingredients.add(fields[i].toLowerCase());
 				}
-				ret.add(r);
-
+			    if(!recipeHash.containsKey(r.name)) {
+				  recipeHash.put(r.name,r);
+            	  ret.add(r);
+			    }
 			}
 			return ret;
 		} catch (IOException e) {
@@ -105,13 +112,7 @@ public class RecipeClassifier extends JFrame {
 			new String[] { "Ingredients" });
 	MyTableModel rightTopTableModel = new MyTableModel(null,
 			new String[] { "Like These Recipes" });
-	HashSet<String> ingredientHash = new HashSet<String>(ingredients);
-	HashMap<String, Recipe> recipeHash = new HashMap<String, Recipe>();
-	{ 
-		for(Recipe r: recipes) {
-			recipeHash.put(r.name,r);
-		}
-	}
+
 
 	JTable leftTable = new JTable(leftTableModel);
 	JTable rightTopTable = new JTable(rightTopTableModel);
@@ -163,11 +164,9 @@ public class RecipeClassifier extends JFrame {
 
 		rightArea.add(classifyArea, BorderLayout.NORTH);
 
-		JPanel resultAndTableArea = new JPanel(new BorderLayout());
-		resultAndTableArea.add(new JScrollPane(rightTopTable),
-				BorderLayout.NORTH);
-		resultAndTableArea.add(new JScrollPane(rightBottomTable),
-				BorderLayout.CENTER);
+		JPanel resultAndTableArea = new JPanel(new GridLayout(2,1));
+		resultAndTableArea.add(new JScrollPane(rightTopTable));
+		resultAndTableArea.add(new JScrollPane(rightBottomTable));
 
 		rightArea.add(resultAndTableArea);
 
@@ -287,9 +286,17 @@ public class RecipeClassifier extends JFrame {
 				Collections.sort(results);
 				Collections.reverse(results);
 
+				
+				
+				int maxResults = 20;
+				int i =0;
 				for (Tuple t : results) {
-					if (t.score == 0)
+					if (t.score <= 0)
 						continue;
+					i++;
+					if(i>maxResults) break;
+					System.out.println("Likeness for " + t.r.name + " is " + calculateLikeness(a, t.r.ingredients));
+
 					Object[] data = new Object[1];
 					data[0] = t.r.name;
 					rightTopTableModel.insertRow(
@@ -326,7 +333,7 @@ public class RecipeClassifier extends JFrame {
 	}
 
 	public static void createAndShowGUI() {
-		System.out.println("ASDF");
+		
 		// Create and set up the window.
 		JFrame frame = new RecipeClassifier();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -386,19 +393,12 @@ public class RecipeClassifier extends JFrame {
 	  }
 	  Collections.sort(list);
 	  Collections.reverse(list);
-	  
-	  for(Tuple t : list) {
-		  System.out.println(t.ing + " : " + t.count);	  
-	  }
-	 
-	  
  		
 	}
 
 	public double calculateLikeness(HashSet<String> a, HashSet<String> b) {
 		double c = 0;
-		System.out.println(b);
-		// Count the commonalities of A and B
+		// Get the commonalities of A and B
 		for (String aItem : a) {
 			if (b.contains(aItem)) {
 				//Get the item score..
@@ -406,6 +406,18 @@ public class RecipeClassifier extends JFrame {
 				c += score;
 			}
 		}
+		
+		//Get the items that are present in B but not in A
+		for (String bItem : b) {
+			if (!a.contains(bItem)) {
+				//deduct the minimum score..
+				double tmp = c;
+				c -= .000000000001;
+				if(c == tmp) {System.out.println("WTF!!");}
+			}
+		}
+		
+		
 
 		return c;
 
