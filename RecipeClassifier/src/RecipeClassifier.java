@@ -3,6 +3,8 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -123,6 +125,17 @@ public class RecipeClassifier extends JFrame {
 	JButton resetButton = new JButton("Reset");
 	JLabel resultLabel = new JLabel("Result:");
 
+	public void addAction() {
+		if (!ingredientHash.contains(ingredEntry.getText())) {
+
+			return;
+		}
+
+		Object[] data = new Object[1];
+		data[0] = ingredEntry.getText();
+		leftTableModel.insertRow(leftTableModel.getRowCount(), data);
+		ingredEntry.setText("");
+	}
 	public RecipeClassifier() {
 
 		GridLayout myLayout = new GridLayout(1, 2);
@@ -184,18 +197,21 @@ public class RecipeClassifier extends JFrame {
 		addButton.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
-
-				if (!ingredientHash.contains(ingredEntry.getText())) {
-					JOptionPane.showMessageDialog(null,
-							"Use a valid ingredient", "Error",
-							JOptionPane.ERROR_MESSAGE);
-					return;
+              addAction();
+			}
+		});
+		ingredEntry.addKeyListener( new KeyAdapter() {
+			public void keyReleased(KeyEvent e) {
+				if(e.getKeyCode() == KeyEvent.VK_ENTER) {
+					addAction();
 				}
-
-				Object[] data = new Object[1];
-				data[0] = ingredEntry.getText();
-				leftTableModel.insertRow(leftTableModel.getRowCount(), data);
-				ingredEntry.setText("");
+			}
+		});;
+		addButton.addKeyListener( new KeyAdapter() {
+			public void keyReleased(KeyEvent e) {
+				if(e.getKeyCode() == KeyEvent.VK_ENTER) {
+					addAction();
+				}
 			}
 		});
 
@@ -401,9 +417,13 @@ public class RecipeClassifier extends JFrame {
 		// Get the commonalities of A and B
 		for (String aItem : a) {
 			if (b.contains(aItem)) {
-				//Get the item score..
+				//weight the score based on the ingredient's distinctiveness
 				double score = 1.0 / ingrGram.get(aItem);
 				c += score;
+				
+			}
+			else {
+				c -= .000000000001;
 			}
 		}
 		
