@@ -409,12 +409,28 @@ public class RecipeClassifier extends JFrame {
 	  }
 	  Collections.sort(list);
 	  Collections.reverse(list);
+	  
+	  for(Tuple t: list) {
+		System.out.println(t.ing + " : " + t.count);  
+      }
+	  
+	  for(Recipe r : recipes) {
+		  for(String i : r.ingredients) {
+			  if(!ingredientHash.contains(i)) {
+				  System.out.println(i);
+				  ingredientHash.add(i);
+			  }
+		  }
+	  }
  		
+	  
 	}
 
 	public double calculateLikeness(HashSet<String> a, HashSet<String> b) {
 		double c = 0;
-		// Get the commonalities of A and B
+		// Iterate over the common items between A and B
+		// Tally scores for the commonalities.. deduct a minimum value for the
+		// items that aren't common
 		for (String aItem : a) {
 			if (b.contains(aItem)) {
 				//weight the score based on the ingredient's distinctiveness
@@ -423,6 +439,7 @@ public class RecipeClassifier extends JFrame {
 				
 			}
 			else {
+				//deduct the minimum score
 				c -= .000000000001;
 			}
 		}
@@ -436,8 +453,6 @@ public class RecipeClassifier extends JFrame {
 				if(c == tmp) {System.out.println("WTF!!");}
 			}
 		}
-		
-		
 
 		return c;
 
