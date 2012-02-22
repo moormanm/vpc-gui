@@ -436,7 +436,7 @@ public class RecipeClassifier extends JFrame {
 				//weight the score based on the ingredient's distinctiveness
 				double score = 1.0 / ingrGram.get(aItem);
 				c += score;
-				
+				c += 1.0;
 			}
 			else {
 				//deduct the minimum score
